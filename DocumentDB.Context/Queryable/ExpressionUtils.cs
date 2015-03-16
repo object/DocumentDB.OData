@@ -154,7 +154,7 @@ namespace DocumentDB.Context.Queryable
                 var member = lambda.Body as MemberExpression;
                 return member.Expression.NodeType == ExpressionType.Parameter &&
                        (member.Expression as ParameterExpression).Name == "element" &&
-                       member.Member.Name == MongoMetadata.MappedObjectIdName;
+                       member.Member.Name == DocumentDbMetadata.MappedObjectIdName;
             }
             else
             {

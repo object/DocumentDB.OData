@@ -61,7 +61,7 @@ namespace DocumentDB.Context.Tests
                     var message = string.Format("Property {0} of type {1} should {2}be marked as nullable",
                                   x.Name, x.Type, x.Nullable ? "not " : "");
 
-                    if (x.Name == MongoMetadata.MappedObjectIdName || x.Type.Name.StartsWith("Collection("))
+                    if (x.Name == DocumentDbMetadata.MappedObjectIdName || x.Type.Name.StartsWith("Collection("))
                         Assert.False(x.Nullable, message);
                     else
                         Assert.True(x.Nullable, message);

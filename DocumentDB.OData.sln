@@ -12,9 +12,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataServiceProvider", "Data
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuspec", "Nuspec", "{368A815B-7F32-4541-890A-106372ACB71E}"
 	ProjectSection(SolutionItems) = preProject
-		Nuspec\MongOData.nuspec = Nuspec\MongOData.nuspec
-		Nuspec\MongoDataService.cs.pp = Nuspec\MongoDataService.cs.pp
-		Nuspec\MongoDataService.svc.pp = Nuspec\MongoDataService.svc.pp
+		Nuspec\DocumentDB.OData.nuspec = Nuspec\DocumentDB.OData.nuspec
+		Nuspec\DocumentDbDataService.cs.pp = Nuspec\DocumentDbDataService.cs.pp
+		Nuspec\DocumentDbDataService.svc.pp = Nuspec\DocumentDbDataService.svc.pp
 		Nuspec\NugetPack.cmd = Nuspec\NugetPack.cmd
 		Nuspec\NugetPush.cmd = Nuspec\NugetPush.cmd
 		Nuspec\web.config.transform = Nuspec\web.config.transform

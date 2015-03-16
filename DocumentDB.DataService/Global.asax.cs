@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Services;
-using System.Linq;
 using System.ServiceModel.Activation;
-using System.Web;
 using System.Web.Routing;
-using System.Web.Security;
-using System.Web.SessionState;
 using DocumentDB.Context;
-using Mongo.DataService;
 
-namespace Mongo.DataService
+namespace DocumentDB.DataService
 {
     public class Global : System.Web.HttpApplication
     {
@@ -55,10 +49,10 @@ namespace Mongo.DataService
         {
             DataServiceHostFactory factory = new DataServiceHostFactory();
             string serverName = Utils.ExtractServerNameFromConnectionString(ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString);
-            var databaseNames = MongoContext.GetDatabaseNames(serverName);
+            var databaseNames = DocumentDbContext.GetDatabaseNames(serverName);
             foreach (var databaseName in databaseNames)
             {
-                RouteTable.Routes.Add(new ServiceRoute(databaseName, factory, typeof(MongOData)));
+                RouteTable.Routes.Add(new ServiceRoute(databaseName, factory, typeof(DocumentDbOData)));
             }
         }
     }

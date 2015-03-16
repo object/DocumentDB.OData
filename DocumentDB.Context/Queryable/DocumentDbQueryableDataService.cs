@@ -8,18 +8,18 @@ using MongoDB.Bson.Serialization.Conventions;
 
 namespace DocumentDB.Context.Queryable
 {
-    public abstract class MongoQueryableDataService : MongoDataServiceBase<DSPQueryableContext, MongoDSPResourceQueryProvider>
+    public abstract class DocumentDbQueryableDataService : DocumentDbDataServiceBase<DSPQueryableContext, DocumentDbDSPResourceQueryProvider>
     {
-        public MongoQueryableDataService(string connectionString, MongoConfiguration mongoConfiguration = null)
-            : base(connectionString, mongoConfiguration)
+        public DocumentDbQueryableDataService(string connectionString, DocumentDbConfiguration dbConfiguration = null)
+            : base(connectionString, dbConfiguration)
         {
-            this.createResourceQueryProvider = () => new MongoDSPResourceQueryProvider();
+            this.createResourceQueryProvider = () => new DocumentDbDSPResourceQueryProvider();
         }
 
         public override DSPQueryableContext CreateContext(string connectionString)
         {
             Func<string, IQueryable> queryProviders = x => GetQueryableCollection(connectionString, x,
-                this.mongoMetadata.ProviderTypes, this.mongoMetadata.GeneratedTypes);
+                this.dbMetadata.ProviderTypes, this.dbMetadata.GeneratedTypes);
             var dspContext = new DSPQueryableContext(this.Metadata, queryProviders);
             return dspContext;
         }
@@ -30,12 +30,12 @@ namespace DocumentDB.Context.Queryable
             var collectionType = CreateDynamicTypeForCollection(collectionName, providerTypes, generatedTypes);
 
             var conventionPack = new ConventionPack();
-            conventionPack.Add(new NamedIdMemberConvention(MongoMetadata.MappedObjectIdName));
+            conventionPack.Add(new NamedIdMemberConvention(DocumentDbMetadata.MappedObjectIdName));
             conventionPack.Add(new IgnoreExtraElementsConvention(true));
             ConventionRegistry.Register(collectionName, conventionPack, t => t == collectionType);
 
             return InterceptingProvider.Intercept(
-                new MongoQueryableResource(this.mongoMetadata, connectionString, collectionName, collectionType),
+                new DocumentDbQueryableResource(this.dbMetadata, connectionString, collectionName, collectionType),
                 new ResultExpressionVisitor());
         }
 
@@ -43,8 +43,8 @@ namespace DocumentDB.Context.Queryable
         {
             Func<string, bool> criteria = x =>
                                           x.StartsWith(collectionName + ".") ||
-                                          MongoMetadata.UseGlobalComplexTypeNames &&
-                                          x.StartsWith(collectionName + MongoMetadata.WordSeparator);
+                                          DocumentDbMetadata.UseGlobalComplexTypeNames &&
+                                          x.StartsWith(collectionName + DocumentDbMetadata.WordSeparator);
 
             return CreateDynamicTypes(criteria, providerTypes, generatedTypes);
         }
@@ -63,7 +63,7 @@ namespace DocumentDB.Context.Queryable
         private Type GetDynamicTypeForProviderType(string typeName, Type providerType,
             Dictionary<string, Type> providerTypes, Dictionary<string, Type> generatedTypes)
         {
-            if (MongoMetadata.CreateDynamicTypesForComplexTypes && providerType == typeof(BsonDocument))
+            if (DocumentDbMetadata.CreateDynamicTypesForComplexTypes && providerType == typeof(BsonDocument))
             {
                 Type dynamicType;
                 if (generatedTypes.ContainsKey(typeName))
@@ -73,7 +73,7 @@ namespace DocumentDB.Context.Queryable
                 else
                 {
                     var typeNameWords = typeName.Split('.');
-                    Func<string, bool> criteria = x => x.StartsWith(string.Join(MongoMetadata.WordSeparator, typeNameWords) + ".");
+                    Func<string, bool> criteria = x => x.StartsWith(string.Join(DocumentDbMetadata.WordSeparator, typeNameWords) + ".");
 
                     dynamicType = CreateDynamicTypes(criteria, providerTypes, generatedTypes);
                     generatedTypes.Add(typeName, dynamicType);

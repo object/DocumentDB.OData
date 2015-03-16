@@ -6,27 +6,27 @@ using DataServiceProvider;
 
 namespace DocumentDB.Context
 {
-    public abstract class MongoDataServiceBase<T,Q> : DSPDataService<T, Q, DSPUpdateProvider>
+    public abstract class DocumentDbDataServiceBase<T,Q> : DSPDataService<T, Q, DSPUpdateProvider>
         where T : DSPContext
         where Q : DSPResourceQueryProvider
     {
         protected string connectionString;
-        protected MongoConfiguration mongoConfiguration;
+        protected DocumentDbConfiguration dbConfiguration;
         protected static Action<string> ResetDataContext;
         protected static T context;
-        protected MongoMetadata mongoMetadata;
+        protected DocumentDbMetadata dbMetadata;
 
         /// <summary>Constructor</summary>
-        public MongoDataServiceBase(string connectionString, MongoConfiguration mongoConfiguration)
+        public DocumentDbDataServiceBase(string connectionString, DocumentDbConfiguration dbConfiguration)
         {
             this.connectionString = connectionString;
-            this.mongoConfiguration = mongoConfiguration;
-            this.createUpdateProvider = () => new MongoDSPUpdateProvider(this.connectionString, this.CurrentDataSource, this.mongoMetadata);
+            this.dbConfiguration = dbConfiguration;
+            this.createUpdateProvider = () => new DocumentDbDSPUpdateProvider(this.connectionString, this.CurrentDataSource, this.dbMetadata);
 
             ResetDataContext = x =>
             {
-                this.mongoMetadata = new MongoMetadata(x, this.mongoConfiguration == null ? null : this.mongoConfiguration.MetadataBuildStrategy);
-                MongoDataServiceBase<T,Q>.context = this.CreateContext(x);
+                this.dbMetadata = new DocumentDbMetadata(x, this.dbConfiguration == null ? null : this.dbConfiguration.MetadataBuildStrategy);
+                DocumentDbDataServiceBase<T,Q>.context = this.CreateContext(x);
             };
 
             ResetDataContext(connectionString);
@@ -34,7 +34,7 @@ namespace DocumentDB.Context
 
         public static IDisposable RestoreDataContext(string connectionString)
         {
-            return new MongoDataServiceBase<T,Q>.RestoreDataContextDisposable(connectionString);
+            return new DocumentDbDataServiceBase<T,Q>.RestoreDataContextDisposable(connectionString);
         }
 
         public abstract T CreateContext(string connectionString);
@@ -65,7 +65,7 @@ namespace DocumentDB.Context
             {
                 if (this.metadata == null)
                 {
-                    this.metadata = this.mongoMetadata.CreateDSPMetadata();
+                    this.metadata = this.dbMetadata.CreateDSPMetadata();
                 }
             }
             return metadata;
@@ -73,7 +73,7 @@ namespace DocumentDB.Context
 
         public static void ResetDSPMetadata()
         {
-            MongoMetadata.ResetDSPMetadata();
+            DocumentDbMetadata.ResetDSPMetadata();
         }
     }
 }

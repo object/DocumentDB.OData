@@ -8,16 +8,16 @@ using DataServiceProvider;
 
 namespace DocumentDB.Context
 {
-    public class MongoDSPUpdateProvider : DSPUpdateProvider
+    public class DocumentDbDSPUpdateProvider : DSPUpdateProvider
     {
         class ResourceChange
         {
             public string CollectionName { get; set; }
             public DSPResource Resource { get; set; }
             public Dictionary<string, object> ModifiedProperties { get; private set; }
-            public Action<MongoContext, ResourceChange> Action { get; private set; }
+            public Action<DocumentDbContext, ResourceChange> Action { get; private set; }
 
-            public ResourceChange(string collectionName, DSPResource resource, Action<MongoContext, ResourceChange> action)
+            public ResourceChange(string collectionName, DSPResource resource, Action<DocumentDbContext, ResourceChange> action)
             {
                 this.CollectionName = collectionName;
                 this.Resource = resource;
@@ -26,15 +26,15 @@ namespace DocumentDB.Context
             }
         }
 
-        private string connectionString;
-        private MongoMetadata mongoMetadata;
-        private List<ResourceChange> pendingChanges = new List<ResourceChange>();
+        private readonly string connectionString;
+        private readonly DocumentDbMetadata dbMetadata;
+        private readonly List<ResourceChange> pendingChanges = new List<ResourceChange>();
 
-        public MongoDSPUpdateProvider(string connectionString, DSPContext dataContext, MongoMetadata mongoMetadata)
-            : base(dataContext, mongoMetadata.CreateDSPMetadata())
+        public DocumentDbDSPUpdateProvider(string connectionString, DSPContext dataContext, DocumentDbMetadata dbMetadata)
+            : base(dataContext, dbMetadata.CreateDSPMetadata())
         {
             this.connectionString = connectionString;
-            this.mongoMetadata = mongoMetadata;
+            this.dbMetadata = dbMetadata;
         }
 
         public override object CreateResource(string containerName, string fullTypeName)
@@ -80,12 +80,12 @@ namespace DocumentDB.Context
         {
             base.SaveChanges();
 
-            using (MongoContext mongoContext = new MongoContext(connectionString))
+            using (DocumentDbContext dbContext = new DocumentDbContext(connectionString))
             {
                 foreach (var pendingChange in this.pendingChanges)
                 {
                     var action = pendingChange.Action;
-                    action(mongoContext, pendingChange);
+                    action(dbContext, pendingChange);
                 }
             }
 
@@ -99,21 +99,21 @@ namespace DocumentDB.Context
             this.pendingChanges.Clear();
         }
 
-        private void InsertDocument(MongoContext mongoContext, ResourceChange change)
+        private void InsertDocument(DocumentDbContext dbContext, ResourceChange change)
         {
-            var collection = mongoContext.Database.GetCollection(change.CollectionName);
-            var document = MongoDSPConverter.CreateBSonDocument(change.Resource, this.mongoMetadata, change.CollectionName);
+            var collection = dbContext.Database.GetCollection(change.CollectionName);
+            var document = DocumentDbDSPConverter.CreateBSonDocument(change.Resource, this.dbMetadata, change.CollectionName);
             collection.Insert(document);
-            change.Resource.SetValue(MongoMetadata.MappedObjectIdName, document.GetValue(MongoMetadata.ProviderObjectIdName).ToString());
+            change.Resource.SetValue(DocumentDbMetadata.MappedObjectIdName, document.GetValue(DocumentDbMetadata.ProviderObjectIdName).ToString());
         }
 
-        private void UpdateDocument(MongoContext mongoContext, ResourceChange change)
+        private void UpdateDocument(DocumentDbContext dbContext, ResourceChange change)
         {
             if (!change.ModifiedProperties.Any())
                 return;
 
-            var collection = mongoContext.Database.GetCollection(change.CollectionName);
-            var query = Query.EQ(MongoMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(MongoMetadata.MappedObjectIdName).ToString()));
+            var collection = dbContext.Database.GetCollection(change.CollectionName);
+            var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(DocumentDbMetadata.MappedObjectIdName).ToString()));
             UpdateBuilder update = null;
 
             foreach (var resourceProperty in change.ModifiedProperties)
@@ -137,10 +137,10 @@ namespace DocumentDB.Context
             collection.Update(query, update);
         }
 
-        private void RemoveDocument(MongoContext mongoContext, ResourceChange change)
+        private void RemoveDocument(DocumentDbContext dbContext, ResourceChange change)
         {
-            var collection = mongoContext.Database.GetCollection(change.CollectionName);
-            var query = Query.EQ(MongoMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(MongoMetadata.MappedObjectIdName).ToString()));
+            var collection = dbContext.Database.GetCollection(change.CollectionName);
+            var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(DocumentDbMetadata.MappedObjectIdName).ToString()));
             collection.Remove(query);
         }
     }

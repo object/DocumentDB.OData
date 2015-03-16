@@ -14,11 +14,11 @@ namespace DocumentDB.Context.Queryable
 {
     public class QueryExpressionVisitor : DSPMethodTranslatingVisitor
     {
-        private IQueryable queryableCollection;
-        private Type collectionType;
-        private MongoMetadata mongoMetadata;
+        private readonly IQueryable queryableCollection;
+        private readonly Type collectionType;
+        private readonly DocumentDbMetadata dbMetadata;
 
-        public QueryExpressionVisitor(MongoCollection mongoCollection, MongoMetadata mongoMetadata, Type queryDocumentType)
+        public QueryExpressionVisitor(MongoCollection mongoCollection, DocumentDbMetadata dbMetadata, Type queryDocumentType)
         {
             var genericMethod = typeof(LinqExtensionMethods).GetMethods()
                 .Where(x => x.Name == "AsQueryable" && x.GetParameters().Single().ParameterType.IsGenericType)
@@ -26,7 +26,7 @@ namespace DocumentDB.Context.Queryable
             var method = genericMethod.MakeGenericMethod(queryDocumentType);
             this.queryableCollection = method.Invoke(null, new object[] { mongoCollection }) as IQueryable;
             this.collectionType = queryDocumentType;
-            this.mongoMetadata = mongoMetadata;
+            this.dbMetadata = dbMetadata;
         }
 
         public override Expression VisitMethodCall(MethodCallExpression m)
@@ -239,8 +239,8 @@ namespace DocumentDB.Context.Queryable
         private Expression ReplaceMemberAccess(MethodCallExpression m)
         {
             var fieldName = (((m.Arguments[0] as MemberExpression).Expression as ConstantExpression).Value as ResourceProperty).Name;
-            if (fieldName == MongoMetadata.MappedObjectIdName)
-                fieldName = MongoMetadata.ProviderObjectIdName;
+            if (fieldName == DocumentDbMetadata.MappedObjectIdName)
+                fieldName = DocumentDbMetadata.ProviderObjectIdName;
 
             if (m.Object.NodeType == ExpressionType.Parameter)
             {
@@ -253,11 +253,11 @@ namespace DocumentDB.Context.Queryable
                 var methodCallExpression = (m.Object as UnaryExpression).Operand as MethodCallExpression as MethodCallExpression;
                 var resourceProperty = ((methodCallExpression.Arguments.First() as MemberExpression).Expression as ConstantExpression).Value as ResourceProperty;
                 var typeName = resourceProperty.ResourceType.Name;
-                if (!MongoMetadata.UseGlobalComplexTypeNames)
+                if (!DocumentDbMetadata.UseGlobalComplexTypeNames)
                 {
-                    typeName = typeName.Replace(MongoMetadata.WordSeparator, ".");
+                    typeName = typeName.Replace(DocumentDbMetadata.WordSeparator, ".");
                 }
-                var propertyType = this.mongoMetadata.GeneratedTypes.Single(x => x.Key == typeName).Value;
+                var propertyType = this.dbMetadata.GeneratedTypes.Single(x => x.Key == typeName).Value;
                 var member = propertyType.GetMember(fieldName).Single();
                 var expression = ReplaceMemberAccess(methodCallExpression);
                 return Expression.MakeMemberAccess(expression, member);
@@ -271,8 +271,8 @@ namespace DocumentDB.Context.Queryable
         private Expression ReplaceMemberLookup(MethodCallExpression m)
         {
             var fieldName = ((m.Arguments[0] as ConstantExpression).Value as string);
-            if (fieldName == MongoMetadata.MappedObjectIdName)
-                fieldName = MongoMetadata.ProviderObjectIdName;
+            if (fieldName == DocumentDbMetadata.MappedObjectIdName)
+                fieldName = DocumentDbMetadata.ProviderObjectIdName;
 
             var parameterExpression = Expression.Parameter(this.collectionType, (m.Object as ParameterExpression).Name);
             var member = this.collectionType.GetMember(fieldName).Single();

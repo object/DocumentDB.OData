@@ -41,12 +41,12 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchOneForwardNoUpdate()
         {
-            TestService.Configuration = new MongoConfiguration
+            TestService.Configuration = new DocumentDbConfiguration
                 {
-                    MetadataBuildStrategy = new MongoConfiguration.Metadata
+                    MetadataBuildStrategy = new DocumentDbConfiguration.Metadata
                     {
                         PrefetchRows = 1,
-                        FetchPosition = MongoConfiguration.FetchPosition.Start,
+                        FetchPosition = DocumentDbConfiguration.FetchPosition.Start,
                         UpdateDynamically = false
                     }
                 };
@@ -59,12 +59,12 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchOneBackwardNoUpdate()
         {
-            TestService.Configuration = new MongoConfiguration
+            TestService.Configuration = new DocumentDbConfiguration
                 {
-                    MetadataBuildStrategy = new MongoConfiguration.Metadata
+                    MetadataBuildStrategy = new DocumentDbConfiguration.Metadata
                     {
                         PrefetchRows = 1,
-                        FetchPosition = MongoConfiguration.FetchPosition.End,
+                        FetchPosition = DocumentDbConfiguration.FetchPosition.End,
                         UpdateDynamically = false
                     }
                 };
@@ -77,12 +77,12 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchTwoForwardNoUpdate()
         {
-            TestService.Configuration = new MongoConfiguration
+            TestService.Configuration = new DocumentDbConfiguration
                 {
-                    MetadataBuildStrategy = new MongoConfiguration.Metadata
+                    MetadataBuildStrategy = new DocumentDbConfiguration.Metadata
                     {
                         PrefetchRows = 2,
-                        FetchPosition = MongoConfiguration.FetchPosition.Start,
+                        FetchPosition = DocumentDbConfiguration.FetchPosition.Start,
                         UpdateDynamically = false
                     }
                 };
@@ -95,12 +95,12 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchTwoBackwardNoUpdate()
         {
-            TestService.Configuration = new MongoConfiguration
+            TestService.Configuration = new DocumentDbConfiguration
                 {
-                    MetadataBuildStrategy = new MongoConfiguration.Metadata
+                    MetadataBuildStrategy = new DocumentDbConfiguration.Metadata
                     {
                         PrefetchRows = 2,
-                        FetchPosition = MongoConfiguration.FetchPosition.End,
+                        FetchPosition = DocumentDbConfiguration.FetchPosition.End,
                         UpdateDynamically = false
                     }
                 };
@@ -113,9 +113,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchAll()
         {
-            TestService.Configuration = new MongoConfiguration
+            TestService.Configuration = new DocumentDbConfiguration
             {
-                MetadataBuildStrategy = new MongoConfiguration.Metadata
+                MetadataBuildStrategy = new DocumentDbConfiguration.Metadata
                     {
                         PrefetchRows = -1,
                         UpdateDynamically = false
@@ -173,7 +173,7 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchNoneUpdate()
         {
-            TestService.Configuration = new MongoConfiguration { MetadataBuildStrategy = new MongoConfiguration.Metadata { PrefetchRows = 0, UpdateDynamically = true } };
+            TestService.Configuration = new DocumentDbConfiguration { MetadataBuildStrategy = new DocumentDbConfiguration.Metadata { PrefetchRows = 0, UpdateDynamically = true } };
             ResetService();
 
             var result = ctx.VariableTypes.All().ToList();
@@ -187,7 +187,7 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchOneUpdate()
         {
-            TestService.Configuration = new MongoConfiguration { MetadataBuildStrategy = new MongoConfiguration.Metadata { PrefetchRows = 1, UpdateDynamically = true } };
+            TestService.Configuration = new DocumentDbConfiguration { MetadataBuildStrategy = new DocumentDbConfiguration.Metadata { PrefetchRows = 1, UpdateDynamically = true } };
             ResetService();
 
             var result = ctx.VariableTypes.All().ToList();
@@ -201,7 +201,7 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void VariableTypesPrefetchTwoUpdate()
         {
-            TestService.Configuration = new MongoConfiguration { MetadataBuildStrategy = new MongoConfiguration.Metadata { PrefetchRows = 2, UpdateDynamically = true } };
+            TestService.Configuration = new DocumentDbConfiguration { MetadataBuildStrategy = new DocumentDbConfiguration.Metadata { PrefetchRows = 2, UpdateDynamically = true } };
             ResetService();
 
             var result = ctx.VariableTypes.All().ToList();

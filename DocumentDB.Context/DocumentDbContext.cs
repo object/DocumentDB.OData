@@ -6,14 +6,14 @@ using MongoDB.Driver;
 
 namespace DocumentDB.Context
 {
-    public partial class MongoContext : IDisposable
+    public partial class DocumentDbContext : IDisposable
     {
         protected string connectionString;
         protected MongoClient client;
         protected MongoServer server;
         protected MongoDatabase database;
 
-        public MongoContext(string connectionString)
+        public DocumentDbContext(string connectionString)
         {
             this.connectionString = connectionString;
             string databaseName = GetDatabaseName(this.connectionString);
@@ -58,7 +58,7 @@ namespace DocumentDB.Context
                 }
             }
 
-            throw new ArgumentException("Unsupported MongoDB connection string", "connectionString");
+            throw new ArgumentException("Unsupported DocumentDB connection string", "connectionString");
         }
     }
 }

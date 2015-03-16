@@ -31,14 +31,14 @@ namespace DocumentDB.Context
         }
     }
 
-    public class MongoMetadata
+    public class DocumentDbMetadata
     {
         public static readonly string ProviderObjectIdName = "_id";
         public static readonly string MappedObjectIdName = "db_id";
         public static readonly Type ProviderObjectIdType = typeof(BsonObjectId);
         public static readonly Type MappedObjectIdType = typeof(string);
-        public static readonly string ContainerName = "MongoContext";
-        public static readonly string RootNamespace = "Mongo";
+        public static readonly string ContainerName = "DocumentDbContext";
+        public static readonly string RootNamespace = "DocumentDB";
         public static readonly bool UseGlobalComplexTypeNames = false;
         internal static bool CreateDynamicTypesForComplexTypes = true;
         internal static readonly string WordSeparator = "__";
@@ -46,24 +46,24 @@ namespace DocumentDB.Context
 
         private readonly string connectionString;
         private readonly List<CollectionProperty> unresolvedProperties = new List<CollectionProperty>();
-        private static readonly Dictionary<string, MongoMetadataCache> MetadataCache = new Dictionary<string, MongoMetadataCache>();
-        private readonly MongoMetadataCache instanceMetadataCache;
+        private static readonly Dictionary<string, DocumentDbMetadataCache> MetadataCache = new Dictionary<string, DocumentDbMetadataCache>();
+        private readonly DocumentDbMetadataCache instanceMetadataCache;
 
-        public MongoConfiguration.Metadata Configuration { get; private set; }
+        public DocumentDbConfiguration.Metadata Configuration { get; private set; }
         internal Dictionary<string, Type> ProviderTypes { get { return this.instanceMetadataCache.ProviderTypes; } }
         internal Dictionary<string, Type> GeneratedTypes { get { return this.instanceMetadataCache.GeneratedTypes; } }
 
-        public MongoMetadata(string connectionString, MongoConfiguration.Metadata metadata = null)
+        public DocumentDbMetadata(string connectionString, DocumentDbConfiguration.Metadata metadata = null)
         {
             this.connectionString = connectionString;
-            this.Configuration = metadata ?? MongoConfiguration.Metadata.Default;
+            this.Configuration = metadata ?? DocumentDbConfiguration.Metadata.Default;
 
             lock (MetadataCache)
             {
                 this.instanceMetadataCache = GetOrCreateMetadataCache();
             }
 
-            using (var context = new MongoContext(connectionString))
+            using (var context = new DocumentDbContext(connectionString))
             {
                 PopulateMetadata(context);
             }
@@ -79,13 +79,13 @@ namespace DocumentDB.Context
             MetadataCache.Clear();
         }
 
-        private MongoMetadataCache GetOrCreateMetadataCache()
+        private DocumentDbMetadataCache GetOrCreateMetadataCache()
         {
-            MongoMetadataCache metadataCache;
+            DocumentDbMetadataCache metadataCache;
             MetadataCache.TryGetValue(this.connectionString, out metadataCache);
             if (metadataCache == null)
             {
-                metadataCache = new MongoMetadataCache(ContainerName, RootNamespace);
+                metadataCache = new DocumentDbMetadataCache(ContainerName, RootNamespace);
                 MetadataCache.Add(this.connectionString, metadataCache);
             }
             return metadataCache;
@@ -94,14 +94,14 @@ namespace DocumentDB.Context
         public ResourceType ResolveResourceType(string resourceName, string ownerPrefix = null)
         {
             ResourceType resourceType;
-            var qualifiedResourceName = string.IsNullOrEmpty(ownerPrefix) ? resourceName : MongoMetadata.GetQualifiedTypeName(ownerPrefix, resourceName);
-            this.instanceMetadataCache.TryResolveResourceType(GetQualifiedPropertyName(MongoMetadata.RootNamespace, qualifiedResourceName), out resourceType);
+            var qualifiedResourceName = string.IsNullOrEmpty(ownerPrefix) ? resourceName : DocumentDbMetadata.GetQualifiedTypeName(ownerPrefix, resourceName);
+            this.instanceMetadataCache.TryResolveResourceType(GetQualifiedPropertyName(DocumentDbMetadata.RootNamespace, qualifiedResourceName), out resourceType);
             return resourceType;
         }
 
         public ResourceProperty ResolveResourceProperty(ResourceType resourceType, BsonElement element)
         {
-            var propertyName = MongoMetadata.GetResourcePropertyName(element, resourceType.ResourceTypeKind);
+            var propertyName = DocumentDbMetadata.GetResourcePropertyName(element, resourceType.ResourceTypeKind);
             return ResolveResourceProperty(resourceType, propertyName);
         }
 
@@ -110,12 +110,12 @@ namespace DocumentDB.Context
             return resourceType.Properties.SingleOrDefault(x => x.Name == propertyName);
         }
 
-        private IEnumerable<string> GetCollectionNames(MongoContext context)
+        private IEnumerable<string> GetCollectionNames(DocumentDbContext context)
         {
             return context.Database.GetCollectionNames().Where(x => !x.StartsWith("system."));
         }
 
-        private void PopulateMetadata(MongoContext context)
+        private void PopulateMetadata(DocumentDbContext context)
         {
             lock (this.instanceMetadataCache)
             {
@@ -147,11 +147,11 @@ namespace DocumentDB.Context
             }
         }
 
-        private void PopulateMetadataFromCollection(MongoContext context, string collectionName, ResourceSet resourceSet)
+        private void PopulateMetadataFromCollection(DocumentDbContext context, string collectionName, ResourceSet resourceSet)
         {
             var collection = context.Database.GetCollection(collectionName);
             const string naturalSort = "$natural";
-            var sortOrder = this.Configuration.FetchPosition == MongoConfiguration.FetchPosition.End
+            var sortOrder = this.Configuration.FetchPosition == DocumentDbConfiguration.FetchPosition.End
                                 ? SortBy.Descending(naturalSort)
                                 : SortBy.Ascending(naturalSort);
             var documents = collection.FindAll().SetSortOrder(sortOrder);
@@ -179,13 +179,13 @@ namespace DocumentDB.Context
             return this.instanceMetadataCache.ResolveResourceSet(resourceName);
         }
 
-        private ResourceSet AddResourceSet(MongoContext context, string collectionName, BsonDocument document = null)
+        private ResourceSet AddResourceSet(DocumentDbContext context, string collectionName, BsonDocument document = null)
         {
             AddDocumentType(context, collectionName, document, ResourceTypeKind.EntityType);
             return this.instanceMetadataCache.ResolveResourceSet(collectionName);
         }
 
-        private void UpdateResourceSet(MongoContext context, ResourceSet resourceSet, BsonDocument document)
+        private void UpdateResourceSet(DocumentDbContext context, ResourceSet resourceSet, BsonDocument document)
         {
             foreach (var element in document.Elements)
             {
@@ -193,7 +193,7 @@ namespace DocumentDB.Context
             }
         }
 
-        private ResourceType AddDocumentType(MongoContext context, string collectionName, BsonDocument document, ResourceTypeKind resourceTypeKind)
+        private ResourceType AddDocumentType(DocumentDbContext context, string collectionName, BsonDocument document, ResourceTypeKind resourceTypeKind)
         {
             var collectionType = resourceTypeKind == ResourceTypeKind.EntityType
                                      ? this.instanceMetadataCache.AddEntityType(collectionName)
@@ -225,7 +225,7 @@ namespace DocumentDB.Context
             return collectionType;
         }
 
-        internal void RegisterResourceProperty(MongoContext context, ResourceType resourceType, BsonElement element)
+        internal void RegisterResourceProperty(DocumentDbContext context, ResourceType resourceType, BsonElement element)
         {
             var collectionProperty = new CollectionProperty { CollectionType = resourceType, PropertyName = element.Name };
             var resourceProperty = ResolveResourceProperty(resourceType, element);
@@ -249,7 +249,7 @@ namespace DocumentDB.Context
             }
         }
 
-        private void AddResourceProperty(MongoContext context, string collectionName, ResourceType collectionType,
+        private void AddResourceProperty(DocumentDbContext context, string collectionName, ResourceType collectionType,
             BsonElement element, bool treatObjectIdAsKey = false)
         {
             var elementType = GetElementType(element, treatObjectIdAsKey);
@@ -287,7 +287,7 @@ namespace DocumentDB.Context
             }
         }
 
-        private void RegisterDocumentProperties(MongoContext context, ResourceType collectionType, BsonElement element)
+        private void RegisterDocumentProperties(DocumentDbContext context, ResourceType collectionType, BsonElement element)
         {
             var resourceName = GetResourcePropertyName(element, ResourceTypeKind.EntityType);
             var resourceType = ResolveResourceType(resourceName, collectionType.Name);
@@ -304,7 +304,7 @@ namespace DocumentDB.Context
             }
         }
 
-        private void RegisterDocumentProperty(MongoContext context, ResourceType resourceType, BsonElement element)
+        private void RegisterDocumentProperty(DocumentDbContext context, ResourceType resourceType, BsonElement element)
         {
             var resourceProperty = ResolveResourceProperty(resourceType, element);
             if (resourceProperty == null)
@@ -321,7 +321,7 @@ namespace DocumentDB.Context
             }
         }
 
-        private void AddDocumentProperty(MongoContext context, string collectionName, ResourceType collectionType, string propertyName, BsonElement element, bool isCollection = false)
+        private void AddDocumentProperty(DocumentDbContext context, string collectionName, ResourceType collectionType, string propertyName, BsonElement element, bool isCollection = false)
         {
             ResourceType resourceType = null;
             var resourceSet = this.instanceMetadataCache.ResolveResourceSet(collectionName);
@@ -340,7 +340,7 @@ namespace DocumentDB.Context
                 this.instanceMetadataCache.AddComplexProperty(collectionType, propertyName, resourceType);
         }
 
-        private void RegisterArrayProperty(MongoContext context, ResourceType collectionType, BsonElement element)
+        private void RegisterArrayProperty(DocumentDbContext context, ResourceType collectionType, BsonElement element)
         {
             var propertyName = GetResourcePropertyName(element, ResourceTypeKind.EntityType);
             var bsonArray = element.Value.AsBsonArray;
@@ -396,7 +396,7 @@ namespace DocumentDB.Context
 
         private static bool IsObjectId(BsonElement element)
         {
-            return element.Name == MongoMetadata.ProviderObjectIdName;
+            return element.Name == DocumentDbMetadata.ProviderObjectIdName;
         }
 
         private static Type GetElementType(BsonElement element, bool treatObjectIdAsKey)
@@ -471,7 +471,7 @@ namespace DocumentDB.Context
         private static string GetResourcePropertyName(BsonElement element, ResourceTypeKind resourceTypeKind)
         {
             return IsObjectId(element) && resourceTypeKind != ResourceTypeKind.ComplexType ?
-                MongoMetadata.MappedObjectIdName :
+                DocumentDbMetadata.MappedObjectIdName :
                 NormalizeResourcePropertyName(element.Name);
         }
 

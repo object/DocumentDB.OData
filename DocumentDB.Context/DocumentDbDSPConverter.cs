@@ -8,24 +8,24 @@ using MongoDB.Bson;
 
 namespace DocumentDB.Context
 {
-    internal static class MongoDSPConverter
+    internal static class DocumentDbDSPConverter
     {
         private static DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        public static DSPResource CreateDSPResource(BsonDocument document, MongoMetadata mongoMetadata, string resourceName, string ownerPrefix = null)
+        public static DSPResource CreateDSPResource(BsonDocument document, DocumentDbMetadata dbMetadata, string resourceName, string ownerPrefix = null)
         {
-            var resourceType = mongoMetadata.ResolveResourceType(resourceName, ownerPrefix);
+            var resourceType = dbMetadata.ResolveResourceType(resourceName, ownerPrefix);
             if (resourceType == null)
                 throw new ArgumentException(string.Format("Unable to resolve resource type {0}", resourceName), "resourceName");
             var resource = new DSPResource(resourceType);
 
             foreach (var element in document.Elements)
             {
-                var resourceProperty = mongoMetadata.ResolveResourceProperty(resourceType, element);
+                var resourceProperty = dbMetadata.ResolveResourceProperty(resourceType, element);
                 if (resourceProperty == null)
                     continue;
 
-                object propertyValue = ConvertBsonValue(element.Value, resourceType, resourceProperty, resourceProperty.Name, mongoMetadata);
+                object propertyValue = ConvertBsonValue(element.Value, resourceType, resourceProperty, resourceProperty.Name, dbMetadata);
                 resource.SetValue(resourceProperty.Name, propertyValue);
             }
             AssignNullCollections(resource, resourceType);
@@ -33,10 +33,10 @@ namespace DocumentDB.Context
             return resource;
         }
 
-        public static BsonDocument CreateBSonDocument(DSPResource resource, MongoMetadata mongoMetadata, string resourceName)
+        public static BsonDocument CreateBSonDocument(DSPResource resource, DocumentDbMetadata dbMetadata, string resourceName)
         {
             var document = new BsonDocument();
-            var resourceSet = mongoMetadata.ResolveResourceSet(resourceName);
+            var resourceSet = dbMetadata.ResolveResourceSet(resourceName);
             if (resourceSet != null)
             {
                 foreach (var property in resourceSet.ResourceType.Properties)
@@ -51,7 +51,7 @@ namespace DocumentDB.Context
             return document;
         }
 
-        private static object ConvertBsonValue(BsonValue bsonValue, ResourceType resourceType, ResourceProperty resourceProperty, string propertyName, MongoMetadata mongoMetadata)
+        private static object ConvertBsonValue(BsonValue bsonValue, ResourceType resourceType, ResourceProperty resourceProperty, string propertyName, DocumentDbMetadata dbMetadata)
         {
             if (bsonValue == null)
                 return null;
@@ -68,8 +68,8 @@ namespace DocumentDB.Context
                 }
                 else
                 {
-                    propertyValue = CreateDSPResource(bsonDocument, mongoMetadata, propertyName,
-                        MongoMetadata.GetQualifiedTypePrefix(resourceType.Name));
+                    propertyValue = CreateDSPResource(bsonDocument, dbMetadata, propertyName,
+                        DocumentDbMetadata.GetQualifiedTypePrefix(resourceType.Name));
                     convertValue = true;
                 }
             }
@@ -77,12 +77,12 @@ namespace DocumentDB.Context
             {
                 var bsonArray = bsonValue.AsBsonArray;
                 if (bsonArray != null && bsonArray.Count > 0)
-                    propertyValue = ConvertBsonArray(bsonArray, resourceType, propertyName, mongoMetadata);
+                    propertyValue = ConvertBsonArray(bsonArray, resourceType, propertyName, dbMetadata);
                 convertValue = false;
             }
             else if (bsonValue.GetType() == typeof(BsonNull) && resourceProperty.Kind == ResourcePropertyKind.Collection)
             {
-                propertyValue = ConvertBsonArray(new BsonArray(0), resourceType, propertyName, mongoMetadata);
+                propertyValue = ConvertBsonArray(new BsonArray(0), resourceType, propertyName, dbMetadata);
                 convertValue = false;
             }
             else
@@ -105,7 +105,7 @@ namespace DocumentDB.Context
             return propertyValue;
         }
 
-        private static object ConvertBsonArray(BsonArray bsonArray, ResourceType resourceType, string propertyName, MongoMetadata mongoMetadata)
+        private static object ConvertBsonArray(BsonArray bsonArray, ResourceType resourceType, string propertyName, DocumentDbMetadata dbMetadata)
         {
             if (bsonArray == null || bsonArray.Count == 0)
             {
@@ -131,9 +131,9 @@ namespace DocumentDB.Context
                 {
                     if (isDocument)
                     {
-                        propertyValue[valueIndex++] = CreateDSPResource(bsonArray[index].AsBsonDocument, mongoMetadata,
+                        propertyValue[valueIndex++] = CreateDSPResource(bsonArray[index].AsBsonDocument, dbMetadata,
                                                                      propertyName,
-                                                                     MongoMetadata.GetQualifiedTypePrefix(resourceType.Name));
+                                                                     DocumentDbMetadata.GetQualifiedTypePrefix(resourceType.Name));
                     }
                     else
                     {

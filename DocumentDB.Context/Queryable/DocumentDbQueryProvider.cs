@@ -13,18 +13,18 @@ using MongoDB.Driver.Linq;
 
 namespace DocumentDB.Context.Queryable
 {
-    public class MongoQueryProvider : IQueryProvider
+    public class DocumentDbQueryProvider : IQueryProvider
     {
-        private MongoContext mongoContext;
-        private MongoMetadata mongoMetadata;
+        private readonly DocumentDbContext dbContext;
+        private readonly DocumentDbMetadata dbMetadata;
         private string connectionString;
-        private string collectionName;
-        private Type collectionType;
+        private readonly string collectionName;
+        private readonly Type collectionType;
 
-        public MongoQueryProvider(MongoMetadata mongoMetadata, string connectionString, string collectionName, Type collectionType)
+        public DocumentDbQueryProvider(DocumentDbMetadata dbMetadata, string connectionString, string collectionName, Type collectionType)
         {
-            this.mongoContext = new MongoContext(connectionString);
-            this.mongoMetadata = mongoMetadata;
+            this.dbContext = new DocumentDbContext(connectionString);
+            this.dbMetadata = dbMetadata;
             this.connectionString = connectionString;
             this.collectionName = collectionName;
             this.collectionType = collectionType;
@@ -38,13 +38,13 @@ namespace DocumentDB.Context.Queryable
             }
             else
             {
-                return new MongoQueryableResource(this, expression) as IQueryable<TElement>;
+                return new DocumentDbQueryableResource(this, expression) as IQueryable<TElement>;
             }
         }
 
         public IQueryable CreateQuery(Expression expression)
         {
-            return new MongoQueryableResource(this, expression);
+            return new DocumentDbQueryableResource(this, expression);
         }
 
         public TResult Execute<TResult>(Expression expression)
@@ -90,8 +90,8 @@ namespace DocumentDB.Context.Queryable
 
         private void PrepareExecution(Expression expression, string methodName, out MongoCollection mongoCollection, out Expression mongoExpression, out MethodInfo method)
         {
-            mongoCollection = this.mongoContext.Database.GetCollection(collectionType, collectionName);
-            mongoExpression = new QueryExpressionVisitor(mongoCollection, this.mongoMetadata, collectionType).Visit(expression);
+            mongoCollection = this.dbContext.Database.GetCollection(collectionType, collectionName);
+            mongoExpression = new QueryExpressionVisitor(mongoCollection, this.dbMetadata, collectionType).Visit(expression);
 
             var genericMethod = this.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
             method = genericMethod.MakeGenericMethod(collectionType);
@@ -120,9 +120,9 @@ namespace DocumentDB.Context.Queryable
         private DSPResource CreateDSPResource<TSource>(TSource document, string resourceName)
         {
             var typedDocument = document.ToBsonDocument();
-            var resource = MongoDSPConverter.CreateDSPResource(typedDocument, this.mongoMetadata, resourceName);
+            var resource = DocumentDbDSPConverter.CreateDSPResource(typedDocument, this.dbMetadata, resourceName);
 
-            if (this.mongoMetadata.Configuration.UpdateDynamically)
+            if (this.dbMetadata.Configuration.UpdateDynamically)
             {
                 UpdateMetadataFromResourceSet(resourceName, typedDocument);
             }
@@ -132,13 +132,13 @@ namespace DocumentDB.Context.Queryable
 
         private void UpdateMetadataFromResourceSet(string resourceName, BsonDocument typedDocument)
         {
-            var resourceType = mongoMetadata.ResolveResourceType(resourceName);
-            var collection = mongoContext.Database.GetCollection(resourceName);
-            var query = Query.EQ(MongoMetadata.ProviderObjectIdName, ObjectId.Parse(typedDocument.GetValue(MongoMetadata.ProviderObjectIdName).ToString()));
+            var resourceType = dbMetadata.ResolveResourceType(resourceName);
+            var collection = dbContext.Database.GetCollection(resourceName);
+            var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(typedDocument.GetValue(DocumentDbMetadata.ProviderObjectIdName).ToString()));
             var bsonDocument = collection.FindOne(query);
             foreach (var element in bsonDocument.Elements)
             {
-                mongoMetadata.RegisterResourceProperty(this.mongoContext, resourceType, element);
+                dbMetadata.RegisterResourceProperty(this.dbContext, resourceType, element);
             }
         }
 
@@ -146,7 +146,7 @@ namespace DocumentDB.Context.Queryable
         {
             var callExpression = expression as MethodCallExpression;
 
-            MethodInfo methodInfo = typeof(MongoQueryProvider)
+            MethodInfo methodInfo = typeof(DocumentDbQueryProvider)
                 .GetMethod("ProcessProjection", BindingFlags.Instance | BindingFlags.NonPublic)
                 .MakeGenericMethod(typeof(DSPResource), typeof(TElement));
 

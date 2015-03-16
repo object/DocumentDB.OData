@@ -53,6 +53,6 @@ namespace DocumentDB.Context.Tests
             get { return this.serviceUri; }
         }
 
-        public static MongoConfiguration Configuration { get; set; }
+        public static DocumentDbConfiguration Configuration { get; set; }
     }
 }

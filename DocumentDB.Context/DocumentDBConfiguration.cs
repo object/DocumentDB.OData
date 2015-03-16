@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace DocumentDB.Context
 {
-    public sealed class MongoConfiguration : IConfigurationSectionHandler
+    public sealed class DocumentDbConfiguration : IConfigurationSectionHandler
     {
         public enum FetchPosition
         {
@@ -34,18 +34,18 @@ namespace DocumentDB.Context
             }
         }
 
-        public const string SectionName = "MongOData";
+        public const string SectionName = "DocumentDB.OData";
 
         public Metadata MetadataBuildStrategy { get; set; }
 
-        public MongoConfiguration()
+        public DocumentDbConfiguration()
         {
             this.MetadataBuildStrategy = Metadata.Default;
         }
 
         public object Create(object parent, object configContext, XmlNode section)
         {
-            var configuration = new MongoConfiguration();
+            var configuration = new DocumentDbConfiguration();
             if (section != null)
             {
                 string sResult;

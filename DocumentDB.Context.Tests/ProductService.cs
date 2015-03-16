@@ -12,7 +12,7 @@ using DocumentDB.Context.Queryable;
 
 namespace DocumentDB.Context.Tests
 {
-    public class ProductInMemoryService : MongoInMemoryDataService
+    public class ProductInMemoryService : DocumentDbInMemoryDataService
     {
         public ProductInMemoryService() 
             : base (ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString, TestService.Configuration)
@@ -29,7 +29,7 @@ namespace DocumentDB.Context.Tests
         }
     }
 
-    public class ProductQueryableService : MongoQueryableDataService
+    public class ProductQueryableService : DocumentDbQueryableDataService
     {
         public ProductQueryableService()
             : base(ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString, TestService.Configuration)

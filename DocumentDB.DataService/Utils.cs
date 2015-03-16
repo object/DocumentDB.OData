@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
 using System.Web;
 
-namespace Mongo.DataService
+namespace DocumentDB.DataService
 {
     internal class Utils
     {

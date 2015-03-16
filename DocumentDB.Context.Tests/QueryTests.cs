@@ -16,7 +16,7 @@ namespace DocumentDB.Context.Tests
         [SetUp]
         public override void SetUp()
         {
-            TestService.Configuration = new MongoConfiguration { MetadataBuildStrategy = new MongoConfiguration.Metadata { PrefetchRows = -1, UpdateDynamically = false } };
+            TestService.Configuration = new DocumentDbConfiguration { MetadataBuildStrategy = new DocumentDbConfiguration.Metadata { PrefetchRows = -1, UpdateDynamically = false } };
             base.SetUp();
         }
 
@@ -323,12 +323,12 @@ namespace DocumentDB.Context.Tests
         {
             try
             {
-                MongoMetadata.CreateDynamicTypesForComplexTypes = false;
+                DocumentDbMetadata.CreateDynamicTypesForComplexTypes = false;
                 Assert.Throws<WebRequestException>(() => { var x = ctx.Products.Find(ctx.Products.Quantity.Value == 7); });
             }
             finally 
             {
-                MongoMetadata.CreateDynamicTypesForComplexTypes = true;
+                DocumentDbMetadata.CreateDynamicTypesForComplexTypes = true;
             }
         }
 
@@ -337,12 +337,12 @@ namespace DocumentDB.Context.Tests
         {
             try
             {
-                MongoMetadata.CreateDynamicTypesForComplexTypes = false;
+                DocumentDbMetadata.CreateDynamicTypesForComplexTypes = false;
                 Assert.Throws<WebRequestException>(() => { var x = ctx.Products.Find(ctx.Products.Quantity.Units == "liters"); });
             }
             finally
             {
-                MongoMetadata.CreateDynamicTypesForComplexTypes = true;
+                DocumentDbMetadata.CreateDynamicTypesForComplexTypes = true;
             }
         }
     }
@@ -358,7 +358,7 @@ namespace DocumentDB.Context.Tests
         [SetUp]
         public override void SetUp()
         {
-            TestService.Configuration = new MongoConfiguration { MetadataBuildStrategy = new MongoConfiguration.Metadata { PrefetchRows = -1, UpdateDynamically = false } };
+            TestService.Configuration = new DocumentDbConfiguration { MetadataBuildStrategy = new DocumentDbConfiguration.Metadata { PrefetchRows = -1, UpdateDynamically = false } };
             ProductQueryableServiceWithQueryInterceptor.ProductQueryInterceptor = null;
             base.SetUp();
         }

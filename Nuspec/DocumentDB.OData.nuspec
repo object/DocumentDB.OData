@@ -16,7 +16,7 @@
     <language>en-US</language>
     <tags>documentdb odata azure</tags>
     <dependencies>
-      <dependency id="mongocsharpdriver" version="1.9" />
+      <dependency id="Microsoft.Azure.Documents.Client" version="0.9.2-preview" />
       <dependency id="Microsoft.Data.Services" version="5.6.1" />
     </dependencies>
   </metadata>
@@ -24,8 +24,8 @@
     <file src="..\DocumentDB.Context\bin\Release\DocumentDB.Context.dll" target="lib\net40" />
     <file src="..\DocumentDB.Context\bin\Release\DataServiceProvider.dll" target="lib\net40" />
     <file src="web.config.transform" target="content\web.config.transform" />
-    <file src="MongoDataService.svc.pp" target="content" />
-    <file src="MongoDataService.cs.pp" target="content" />
+    <file src="DocumentDbDataService.svc.pp" target="content" />
+    <file src="DocumentDbDataService.cs.pp" target="content" />
     <file src="Install.ps1" target="tools" />
   </files>
 </package>

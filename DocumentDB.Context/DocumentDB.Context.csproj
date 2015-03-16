@@ -72,22 +72,22 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="MongoConfiguration.cs" />
-    <Compile Include="MongoDataServiceBase.cs" />
-    <Compile Include="MongoDSPUpdateProvider.cs" />
-    <Compile Include="MongoMetadataCache.cs" />
+    <Compile Include="DocumentDbConfiguration.cs" />
+    <Compile Include="DocumentDbDataServiceBase.cs" />
+    <Compile Include="DocumentDbDSPUpdateProvider.cs" />
+    <Compile Include="DocumentDbMetadataCache.cs" />
     <Compile Include="Queryable\ExpressionUtils.cs" />
-    <Compile Include="MongoContext.cs" />
-    <Compile Include="MongoDSPConverter.cs" />
-    <Compile Include="Queryable\MongoDSPResourceQueryProvider.cs" />
+    <Compile Include="DocumentDbContext.cs" />
+    <Compile Include="DocumentDbDSPConverter.cs" />
+    <Compile Include="Queryable\DocumentDbDSPResourceQueryProvider.cs" />
     <Compile Include="Queryable\ProjectionExpressionVisitor.cs" />
     <Compile Include="Queryable\ResultExpressionVisitor.cs" />
-    <Compile Include="Queryable\MongoQueryableDataService.cs" />
-    <Compile Include="Queryable\MongoQueryableResource.cs" />
-    <Compile Include="Queryable\MongoQueryProvider.cs" />
-    <Compile Include="InMemory\MongoInMemoryDataService.cs" />
+    <Compile Include="Queryable\DocumentDbQueryableDataService.cs" />
+    <Compile Include="Queryable\DocumentDbQueryableResource.cs" />
+    <Compile Include="Queryable\DocumentDbQueryProvider.cs" />
+    <Compile Include="InMemory\DocumentDbInMemoryDataService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="MongoMetadata.cs" />
+    <Compile Include="DocumentDbMetadata.cs" />
     <Compile Include="Queryable\QueryExpressionVisitor.cs" />
     <Compile Include="Queryable\DocumentTypeBuilder.cs" />
   </ItemGroup>

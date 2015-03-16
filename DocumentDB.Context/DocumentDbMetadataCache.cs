@@ -6,13 +6,13 @@ using DataServiceProvider;
 
 namespace DocumentDB.Context
 {
-    internal class MongoMetadataCache
+    internal class DocumentDbMetadataCache
     {
         private DSPMetadata dspMetadata { get; set; }
         public Dictionary<string, Type> ProviderTypes { get; set; }
         public Dictionary<string, Type> GeneratedTypes { get; set; }
 
-        public MongoMetadataCache(string containerName, string rootNamespace)
+        public DocumentDbMetadataCache(string containerName, string rootNamespace)
         {
             this.dspMetadata = new DSPMetadata(containerName, rootNamespace);
             ProviderTypes = new Dictionary<string, Type>();

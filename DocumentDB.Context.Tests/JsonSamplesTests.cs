@@ -16,7 +16,7 @@ namespace DocumentDB.Context.Tests
         [SetUp]
         public override void SetUp()
         {
-            TestService.Configuration = new MongoConfiguration { MetadataBuildStrategy = new MongoConfiguration.Metadata { PrefetchRows = -1, UpdateDynamically = false } };
+            TestService.Configuration = new DocumentDbConfiguration { MetadataBuildStrategy = new DocumentDbConfiguration.Metadata { PrefetchRows = -1, UpdateDynamically = false } };
             base.SetUp();
         }
 

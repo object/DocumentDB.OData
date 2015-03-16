@@ -49,7 +49,7 @@ namespace DocumentDB.Context.Queryable
 
             foreach (var field in fields)
             {
-                CreateProperty(tb, field.Key, field.Value, field.Key == MongoMetadata.ProviderObjectIdName);
+                CreateProperty(tb, field.Key, field.Value, field.Key == DocumentDbMetadata.ProviderObjectIdName);
             }
 
             Type objectType = tb.CreateType();

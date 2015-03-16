@@ -7,20 +7,20 @@ using DataServiceProvider;
 
 namespace DocumentDB.Context.Queryable
 {
-    public class MongoQueryableResource : IQueryable<DSPResource>
+    public class DocumentDbQueryableResource : IQueryable<DSPResource>
     {
-        private MongoMetadata mongoMetadata;
-        private MongoQueryProvider provider;
+        private DocumentDbMetadata _documentDbMetadata;
+        private DocumentDbQueryProvider provider;
         private Expression expression;
 
-        public MongoQueryableResource(MongoMetadata mongoMetadata, string connectionString, string collectionName, Type collectionType)
+        public DocumentDbQueryableResource(DocumentDbMetadata dbMetadata, string connectionString, string collectionName, Type collectionType)
         {
-            this.mongoMetadata = mongoMetadata;
-            this.provider = new MongoQueryProvider(mongoMetadata, connectionString, collectionName, collectionType);
+            this._documentDbMetadata = dbMetadata;
+            this.provider = new DocumentDbQueryProvider(dbMetadata, connectionString, collectionName, collectionType);
             this.expression = (new DSPResource[0]).AsQueryable().Expression;
         }
 
-        public MongoQueryableResource(MongoQueryProvider provider, Expression expression)
+        public DocumentDbQueryableResource(DocumentDbQueryProvider provider, Expression expression)
         {
             this.provider = provider;
             this.expression = expression;

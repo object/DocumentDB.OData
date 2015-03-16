@@ -1,23 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Configuration;
+﻿using System.Configuration;
 using System.Data.Services;
 using System.Data.Services.Common;
+using DocumentDB.Context;
 using DocumentDB.Context.Queryable;
 
-namespace $rootnamespace$
+namespace DocumentDB.DataService
 {
-    public class MongoDataService : MongoQueryableDataService
+    public class DocumentDbOData : DocumentDbQueryableDataService
     {
-        public MongoDataService()
-            : base(ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString)
+        public DocumentDbOData()
+            : base(Utils.BuildConnectionString(), ConfigurationManager.GetSection(DocumentDbConfiguration.SectionName) as DocumentDbConfiguration)
         {
         }
 
-        // This method is called only once to initialize service-wide policies.
         public static void InitializeService(DataServiceConfiguration config)
         {
-            // TODO: set rules to indicate which entity sets and service operations are visible, updatable, etc.
             config.SetEntitySetAccessRule("*", EntitySetRights.AllRead);
             config.SetServiceOperationAccessRule("*", ServiceOperationRights.All);
             config.DataServiceBehavior.MaxProtocolVersion = DataServiceProtocolVersion.V3;

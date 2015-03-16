@@ -9,9 +9,9 @@ using MongoDB.Driver;
 
 namespace DocumentDB.Context.Queryable
 {
-    public class MongoDSPResourceQueryProvider : DSPResourceQueryProvider
+    public class DocumentDbDSPResourceQueryProvider : DSPResourceQueryProvider
     {
-        public MongoDSPResourceQueryProvider()
+        public DocumentDbDSPResourceQueryProvider()
         {
         }
 
