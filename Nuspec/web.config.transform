@@ -1,0 +1,5 @@
+<configuration>
+  <connectionStrings>
+    <add name="DocumentDB" connectionString="mongodb://localhost/DATABASE_NAME" />
+  </connectionStrings>
+</configuration>

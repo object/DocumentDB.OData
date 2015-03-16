@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <id>DocumentDB.OData</id>
+    <version>0.1.0</version>
+
+    <title>DocumentDB.OData</title>
+    <authors>Vagif Abilov</authors>
+    <owners>Vagif Abilov</owners>
+    <licenseUrl>http://www.opensource.org/licenses/mit-license.php</licenseUrl>
+    <projectUrl>http://github.com/object/DocumentDB.OData</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Azure DocumentDB OData provider</description>
+    <summary></summary>
+    <releaseNotes></releaseNotes>
+    <language>en-US</language>
+    <tags>documentdb odata azure</tags>
+    <dependencies>
+      <dependency id="mongocsharpdriver" version="1.9" />
+      <dependency id="Microsoft.Data.Services" version="5.6.1" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\DocumentDB.Context\bin\Release\DocumentDB.Context.dll" target="lib\net40" />
+    <file src="..\DocumentDB.Context\bin\Release\DataServiceProvider.dll" target="lib\net40" />
+    <file src="web.config.transform" target="content\web.config.transform" />
+    <file src="MongoDataService.svc.pp" target="content" />
+    <file src="MongoDataService.cs.pp" target="content" />
+    <file src="Install.ps1" target="tools" />
+  </files>
+</package>
