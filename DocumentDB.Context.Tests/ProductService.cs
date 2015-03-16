@@ -15,7 +15,7 @@ namespace DocumentDB.Context.Tests
     public class ProductInMemoryService : DocumentDbInMemoryDataService
     {
         public ProductInMemoryService() 
-            : base (ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString, TestService.Configuration)
+            : base (ConfigurationManager.ConnectionStrings["DocumentDB"].ConnectionString, TestService.Configuration)
         {
         }
 
@@ -32,7 +32,7 @@ namespace DocumentDB.Context.Tests
     public class ProductQueryableService : DocumentDbQueryableDataService
     {
         public ProductQueryableService()
-            : base(ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString, TestService.Configuration)
+            : base(ConfigurationManager.ConnectionStrings["DocumentDB"].ConnectionString, TestService.Configuration)
         {
         }
 

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Data.Services.Common;
 using System.Linq;
 using System.Text;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using Newtonsoft.Json.Bson;
 
 namespace DocumentDB.Context.Tests
 {
@@ -91,7 +90,7 @@ namespace DocumentDB.Context.Tests
         public Decimal DecimalValue { get; set; }
         public Decimal? NullableDecimalValue { get; set; }
         public String StringValue { get; set; }
-        public BsonObjectId ObjectIdValue { get; set; }
+        public BsonObjectId BsonIdValue { get; set; }
     }
 
     public class TypeWithoutExplicitId
@@ -99,30 +98,20 @@ namespace DocumentDB.Context.Tests
         public string Name { get; set; }
     }
 
-    public class TypeWithBsonId
+    public class TypeWithStringId
     {
-        [BsonId]
-        public ObjectId Id { get; set; }
+        public string Id { get; set; }
         public string Name { get; set; }
     }
 
     public class TypeWithIntId
     {
-        [BsonId]
         public int Id { get; set; }
-        public string Name { get; set; }
-    }
-
-    public class TypeWithStringId
-    {
-        [BsonId]
-        public string Id { get; set; }
         public string Name { get; set; }
     }
 
     public class TypeWithGuidId
     {
-        [BsonId]
         public Guid Id { get; set; }
         public string Name { get; set; }
     }

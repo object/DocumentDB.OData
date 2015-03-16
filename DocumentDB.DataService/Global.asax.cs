@@ -48,7 +48,7 @@ namespace DocumentDB.DataService
         private void RegisterRoutes()
         {
             DataServiceHostFactory factory = new DataServiceHostFactory();
-            string serverName = Utils.ExtractServerNameFromConnectionString(ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString);
+            string serverName = Utils.ExtractServerNameFromConnectionString(ConfigurationManager.ConnectionStrings["DocumentDB"].ConnectionString);
             var databaseNames = DocumentDbContext.GetDatabaseNames(serverName);
             foreach (var databaseName in databaseNames)
             {

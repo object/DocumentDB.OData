@@ -1,4 +1,4 @@
-﻿obj
+obj
 obj/
 bin
 deploy
@@ -17,3 +17,4 @@ _ReSharper.*
 *.nupkg
 *.zip
 ~$*
+ConnectionStrings.config

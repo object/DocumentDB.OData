@@ -10,11 +10,11 @@ using Simple.Data.OData;
 
 namespace DocumentDB.Context.Tests
 {
-    public abstract class BsonIdTests<T> : TestBase<T>
+    public abstract class DocumentIdTests<T> : TestBase<T>
     {
         protected override void PopulateTestData()
         {
-            TestData.PopulateWithBsonIdTypes();
+            TestData.PopulateWithDocumentIdTypes();
         }
 
         [Test]
@@ -32,9 +32,9 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void AllTypesWithBsonIdVerifyResultCountAndId()
+        public void AllTypesWithDocumentIdVerifyResultCountAndId()
         {
-            var result = ctx.TypeWithBsonId.All().ToList();
+            var result = ctx.TypeWithDocumentId.All().ToList();
             Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
             Assert.IsNotNull(result[0].db_id);
         }
@@ -65,12 +65,12 @@ namespace DocumentDB.Context.Tests
     }
 
     [TestFixture]
-    public class InMemoryServiceBsonIdTests : BsonIdTests<ProductInMemoryService>
+    public class InMemoryServiceDocumentIdTests : DocumentIdTests<ProductInMemoryService>
     {
     }
 
     [TestFixture]
-    public class QueryableServiceBsonIdTests : BsonIdTests<ProductQueryableService>
+    public class QueryableServiceDocumentIdTests : DocumentIdTests<ProductQueryableService>
     {
     }
 }

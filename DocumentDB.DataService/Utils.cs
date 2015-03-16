@@ -8,7 +8,7 @@ namespace DocumentDB.DataService
     {
         public static string BuildConnectionString()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString;
+            var connectionString = ConfigurationManager.ConnectionStrings["DocumentDB"].ConnectionString;
             int startIndex;
             int endIndex;
             string databaseName = ExtractDatabaseNameFromConnectionString(connectionString, out startIndex, out endIndex);

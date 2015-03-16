@@ -6,8 +6,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
-using MongoDB.Bson;
-using MongoDB.Driver;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentDB.Context.Tests
 {
@@ -17,8 +21,8 @@ namespace DocumentDB.Context.Tests
         {
             var database = GetDatabase(clearDatabase);
 
-            var categories = database.GetCollection<ClientCategory>("Categories");
-            var products = database.GetCollection<ClientProduct>("Products");
+            var categories = database.GetCollection("Categories");
+            var products = database.GetCollection("Products");
 
             var categoryFood = new ClientCategory
                                    {
@@ -111,7 +115,7 @@ namespace DocumentDB.Context.Tests
         {
             var database = GetDatabase(clearDatabase);
 
-            var clrTypes = database.GetCollection<ClrType>("ClrTypes");
+            var clrTypes = database.GetCollection("ClrTypes");
             clrTypes.Insert(
                 new ClrType
                 {
@@ -147,7 +151,7 @@ namespace DocumentDB.Context.Tests
                     DecimalValue = 11,
                     NullableDecimalValue = 11,
                     StringValue = "abc",
-                    ObjectIdValue = new BsonObjectId(new ObjectId(100, 200, 300, 400)),
+                    BsonIdValue = new BsonObjectId(new byte[] {1,2,3,4,5,6,7,8,9,10,11,12}),
                 });
         }
 
@@ -156,39 +160,34 @@ namespace DocumentDB.Context.Tests
             var database = GetDatabase(clearDatabase);
 
             var variableTypes = database.GetCollection("VariableTypes");
-            variableTypes.Insert(new TypeWithOneField { StringValue = "1" }.ToBsonDocument());
-            variableTypes.Insert(new TypeWithTwoFields { StringValue = "2", IntValue = 2 }.ToBsonDocument());
-            variableTypes.Insert(new TypeWithThreeFields { StringValue = "3", IntValue = 3, DecimalValue = 3m }.ToBsonDocument());
+            variableTypes.Insert(new TypeWithOneField { StringValue = "1" });
+            variableTypes.Insert(new TypeWithTwoFields { StringValue = "2", IntValue = 2 });
+            variableTypes.Insert(new TypeWithThreeFields { StringValue = "3", IntValue = 3, DecimalValue = 3m });
         }
 
-        public static void PopulateWithBsonIdTypes(bool clearDatabase = true)
+        public static void PopulateWithDocumentIdTypes(bool clearDatabase = true)
         {
             var database = GetDatabase(clearDatabase);
 
-            var typesWithoutExplicitId = database.GetCollection<TypeWithoutExplicitId>("TypeWithoutExplicitId");
-            typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "A" }.ToBsonDocument());
-            typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "B" }.ToBsonDocument());
-            typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "C" }.ToBsonDocument());
+            var typesWithoutExplicitId = database.GetCollection("TypeWithoutExplicitId");
+            typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "A" });
+            typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "B" });
+            typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "C" });
 
-            var typeWithBsonId = database.GetCollection<TypeWithBsonId>("TypeWithBsonId");
-            typeWithBsonId.Insert(new TypeWithBsonId { Id = ObjectId.GenerateNewId(), Name = "A" }.ToBsonDocument());
-            typeWithBsonId.Insert(new TypeWithBsonId { Id = ObjectId.GenerateNewId(), Name = "B" }.ToBsonDocument());
-            typeWithBsonId.Insert(new TypeWithBsonId { Id = ObjectId.GenerateNewId(), Name = "C" }.ToBsonDocument());
+            var typeWithIntId = database.GetCollection("TypeWithIntId");
+            typeWithIntId.Insert(new TypeWithIntId { Id = 1, Name = "A" });
+            typeWithIntId.Insert(new TypeWithIntId { Id = 2, Name = "B" });
+            typeWithIntId.Insert(new TypeWithIntId { Id = 3, Name = "C" });
 
-            var typeWithIntId = database.GetCollection<TypeWithIntId>("TypeWithIntId");
-            typeWithIntId.Insert(new TypeWithIntId { Id = 1, Name = "A" }.ToBsonDocument());
-            typeWithIntId.Insert(new TypeWithIntId { Id = 2, Name = "B" }.ToBsonDocument());
-            typeWithIntId.Insert(new TypeWithIntId { Id = 3, Name = "C" }.ToBsonDocument());
+            var typeWithStringId = database.GetCollection("TypeWithStringId");
+            typeWithStringId.Insert(new TypeWithStringId { Id = "1", Name = "A" });
+            typeWithStringId.Insert(new TypeWithStringId { Id = "2", Name = "B" });
+            typeWithStringId.Insert(new TypeWithStringId { Id = "3", Name = "C" });
 
-            var typeWithStringId = database.GetCollection<TypeWithStringId>("TypeWithStringId");
-            typeWithStringId.Insert(new TypeWithStringId { Id = "1", Name = "A" }.ToBsonDocument());
-            typeWithStringId.Insert(new TypeWithStringId { Id = "2", Name = "B" }.ToBsonDocument());
-            typeWithStringId.Insert(new TypeWithStringId { Id = "3", Name = "C" }.ToBsonDocument());
-
-            var typeWithGuidId = database.GetCollection<TypeWithGuidId>("TypeWithGuidId");
-            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "A" }.ToBsonDocument());
-            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "B" }.ToBsonDocument());
-            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "C" }.ToBsonDocument());
+            var typeWithGuidId = database.GetCollection("TypeWithGuidId");
+            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "A" });
+            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "B" });
+            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "C" });
         }
 
         public static void PopulateWithJsonSamples(bool clearDatabase = true)
@@ -219,7 +218,7 @@ namespace DocumentDB.Context.Tests
                 var jsonCollection = GetResourceAsString(collectionName + ".json").Split(new string[] { "---" }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var json in jsonCollection)
                 {
-                    var doc = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(json);
+                    var doc = JObject.Parse(json);
                     var collection = database.GetCollection(collectionName);
                     collection.Insert(doc);
                 }
@@ -228,51 +227,54 @@ namespace DocumentDB.Context.Tests
 
         public static void Clean()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString;
-            var server = new MongoClient(connectionString).GetServer();
-
-            server.DropDatabase(GetDatabaseName(connectionString));
+            GetDatabase(true);
         }
 
-        public static MongoDatabase CreateDatabase()
+        public static ClientDatabase CreateDatabase()
         {
             return GetDatabase(true);
         }
 
-        public static MongoDatabase OpenDatabase()
+        public static ClientDatabase OpenDatabase()
         {
             return GetDatabase(false);
         }
 
-        private static MongoDatabase GetDatabase(bool clear)
+        private static ClientDatabase GetDatabase(bool clear)
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["MongoDB"].ConnectionString;
-            var databaseName = GetDatabaseName(connectionString);
-            var server = new MongoClient(connectionString).GetServer();
-            if (clear)
-                server.DropDatabase(databaseName);
-            return server.GetDatabase(databaseName);
-        }
-
-        private static string GetDatabaseName(string connectionString)
-        {
-            string databaseName = connectionString.Substring(connectionString.IndexOf("localhost") + 10);
-            int optionsIndex = databaseName.IndexOf("?");
-            if (optionsIndex > 0)
+            var endpointUrl = string.Empty;
+            var authorizationKey = string.Empty;
+            var databaseName = string.Empty;
+            var connectionString = ConfigurationManager.ConnectionStrings["DocumentDB"].ConnectionString;
+            foreach (var item in connectionString.Split(';'))
             {
-                databaseName = databaseName.Substring(0, optionsIndex);
+                var key = item.Substring(0, item.IndexOf('='));
+                var value = item.Substring(key.Length + 1);
+                switch (key)
+                {
+                    case "EndpointUrl":
+                        endpointUrl = value;
+                        break;
+                    case "AuthorizationKey":
+                        authorizationKey = value;
+                        break;
+                    case "Database":
+                        databaseName = value;
+                        break;
+                }
             }
-            return databaseName;
+
+            return new ClientDatabase(endpointUrl, authorizationKey, databaseName);
         }
 
         private static string GetResourceAsString(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
             var completeResourceName = assembly.GetManifestResourceNames().Single(o => o.EndsWith("." + resourceName));
-            using (Stream resourceStream = assembly.GetManifestResourceStream(completeResourceName))
+            using (var resourceStream = assembly.GetManifestResourceStream(completeResourceName))
             {
                 TextReader reader = new StreamReader(resourceStream);
-                string result = reader.ReadToEnd();
+                var result = reader.ReadToEnd();
                 return result;
             }
         }

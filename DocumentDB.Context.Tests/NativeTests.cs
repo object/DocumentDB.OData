@@ -1,9 +1,8 @@
 ﻿using System.Configuration;
 using System.Linq;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.Linq;
 using NUnit.Framework;
 
 namespace DocumentDB.Context.Tests
@@ -13,8 +12,7 @@ namespace DocumentDB.Context.Tests
     {
         class Product : ClientProduct
         {
-            [BsonId]
-            public ObjectId Id { get; set; }
+            public string Id { get; set; }
         }
 
         class TwitterCollection
@@ -27,9 +25,7 @@ namespace DocumentDB.Context.Tests
 
             public class Result
             {
-                // TODO: remove when MongoDB LINQ provider is fixed
-                [BsonId]
-                public ObjectId Id { get; set; }
+                public string Id { get; set; }
 
                 public string text { get; set; }
                 public int to_user_id { get; set; }
@@ -52,12 +48,11 @@ namespace DocumentDB.Context.Tests
                 public string query { get; set; }
             }
 
-            [BsonId]
-            public ObjectId Id { get; set; }
+            public string Id { get; set; }
             public Result results { get; set; }
         }
 
-        private MongoDatabase _database;
+        private ClientDatabase _database;
 
         protected override void PopulateTestData()
         {
@@ -77,24 +72,24 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterEqualQuantityValue()
         {
-            var collection = _database.GetCollection<Product>("Products");
-            var result = collection.AsQueryable().Where(x => x.Quantity.Value == 7).Single();
+            var collection = _database.GetCollection("Products");
+            var result = collection.AsQueryable<ClientProduct>().Where(x => x.Quantity.Value == 7).Single();
             Assert.AreEqual("Wine", result.Name);
         }
 
         [Test]
         public void FilterEqualQuantityUnits()
         {
-            var collection = _database.GetCollection<Product>("Products");
-            var result = collection.AsQueryable().Where(x => x.Quantity.Units == "liters").Single();
+            var collection = _database.GetCollection("Products");
+            var result = collection.AsQueryable<ClientProduct>().Where(x => x.Quantity.Units == "liters").Single();
             Assert.AreEqual("Milk", result.Name);
         }
 
         [Test]
         public void Twitter()
         {
-            var collection = _database.GetCollection<TwitterCollection>("Twitter");
-            var result = collection.AsQueryable();
+            var collection = _database.GetCollection("Twitter");
+            var result = collection.AsQueryable<TwitterCollection>();
             Assert.AreEqual(1, result.Count());
             Assert.AreEqual(1478555574, result.First().results.id);
         }
