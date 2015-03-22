@@ -6,9 +6,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using DataServiceProvider;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -18,13 +17,13 @@ namespace DocumentDB.Context.Queryable
         private readonly Type collectionType;
         private readonly DocumentDbMetadata dbMetadata;
 
-        public QueryExpressionVisitor(MongoCollection mongoCollection, DocumentDbMetadata dbMetadata, Type queryDocumentType)
+        public QueryExpressionVisitor(DocumentCollection documentCollection, DocumentDbMetadata dbMetadata, Type queryDocumentType)
         {
-            var genericMethod = typeof(LinqExtensionMethods).GetMethods()
-                .Where(x => x.Name == "AsQueryable" && x.GetParameters().Single().ParameterType.IsGenericType)
+            var genericMethod = typeof(DocumentClient).GetMethods()
+                .Where(x => x.Name == "CreateDocumentQuery" && x.GetParameters().Single().ParameterType.IsGenericType)
                 .Single();
             var method = genericMethod.MakeGenericMethod(queryDocumentType);
-            this.queryableCollection = method.Invoke(null, new object[] { mongoCollection }) as IQueryable;
+            this.queryableCollection = method.Invoke(null, new object[] { documentCollection }) as IQueryable;
             this.collectionType = queryDocumentType;
             this.dbMetadata = dbMetadata;
         }
@@ -138,12 +137,13 @@ namespace DocumentDB.Context.Queryable
         {
             Expression left = this.Visit(b.Left);
             Expression right = this.Visit(b.Right);
-            if (left.Type == typeof(ObjectId) &&
-                right.Type == typeof(string) && right.NodeType == ExpressionType.Constant)
-            {
-                return Visit(ReplaceObjectIdComparison(b.NodeType, right, left));
-            }
-            else if (left.Type.IsGenericType && left.Type.GetGenericTypeDefinition() == typeof(Nullable<>) && 
+            //if (left.Type == typeof(ObjectId) &&
+            //    right.Type == typeof(string) && right.NodeType == ExpressionType.Constant)
+            //{
+            //    return Visit(ReplaceObjectIdComparison(b.NodeType, right, left));
+            //}
+            //else 
+            if (left.Type.IsGenericType && left.Type.GetGenericTypeDefinition() == typeof(Nullable<>) && 
                 left.NodeType == ExpressionType.MemberAccess && right.Type.IsValueType)
             {
                  if (right.NodeType == ExpressionType.Constant)
@@ -226,7 +226,7 @@ namespace DocumentDB.Context.Queryable
 
         private Expression ReplaceObjectIdComparison(ExpressionType nodeType, Expression right, Expression left)
         {
-            right = Expression.Constant(ObjectId.Parse((right as ConstantExpression).Value.ToString()));
+            //right = Expression.Constant(ObjectId.Parse((right as ConstantExpression).Value.ToString()));
             return Expression.MakeBinary(nodeType, left, right);
         }
 

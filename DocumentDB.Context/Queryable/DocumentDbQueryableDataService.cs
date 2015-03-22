@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using DataServiceProvider;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Conventions;
+using Microsoft.Azure.Documents;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -29,10 +28,10 @@ namespace DocumentDB.Context.Queryable
         {
             var collectionType = CreateDynamicTypeForCollection(collectionName, providerTypes, generatedTypes);
 
-            var conventionPack = new ConventionPack();
-            conventionPack.Add(new NamedIdMemberConvention(DocumentDbMetadata.MappedObjectIdName));
-            conventionPack.Add(new IgnoreExtraElementsConvention(true));
-            ConventionRegistry.Register(collectionName, conventionPack, t => t == collectionType);
+            //var conventionPack = new ConventionPack();
+            //conventionPack.Add(new NamedIdMemberConvention(DocumentDbMetadata.MappedObjectIdName));
+            //conventionPack.Add(new IgnoreExtraElementsConvention(true));
+            //ConventionRegistry.Register(collectionName, conventionPack, t => t == collectionType);
 
             return InterceptingProvider.Intercept(
                 new DocumentDbQueryableResource(this.dbMetadata, connectionString, collectionName, collectionType),
@@ -63,7 +62,7 @@ namespace DocumentDB.Context.Queryable
         private Type GetDynamicTypeForProviderType(string typeName, Type providerType,
             Dictionary<string, Type> providerTypes, Dictionary<string, Type> generatedTypes)
         {
-            if (DocumentDbMetadata.CreateDynamicTypesForComplexTypes && providerType == typeof(BsonDocument))
+            if (DocumentDbMetadata.CreateDynamicTypesForComplexTypes && providerType == typeof(Document))
             {
                 Type dynamicType;
                 if (generatedTypes.ContainsKey(typeName))

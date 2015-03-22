@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using MongoDB.Bson;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -149,17 +148,18 @@ namespace DocumentDB.Context.Queryable
 
         public static bool IsRedundantOrderMethod(MethodCallExpression m, LambdaExpression lambda)
         {
-            if (m.Method.Name == "ThenBy" && lambda.Body.NodeType == ExpressionType.MemberAccess && lambda.ReturnType == typeof(ObjectId))
-            {
-                var member = lambda.Body as MemberExpression;
-                return member.Expression.NodeType == ExpressionType.Parameter &&
-                       (member.Expression as ParameterExpression).Name == "element" &&
-                       member.Member.Name == DocumentDbMetadata.MappedObjectIdName;
-            }
-            else
-            {
-                return false;
-            }
+            return false;
+            //if (m.Method.Name == "ThenBy" && lambda.Body.NodeType == ExpressionType.MemberAccess && lambda.ReturnType == typeof(ObjectId))
+            //{
+            //    var member = lambda.Body as MemberExpression;
+            //    return member.Expression.NodeType == ExpressionType.Parameter &&
+            //           (member.Expression as ParameterExpression).Name == "element" &&
+            //           member.Member.Name == DocumentDbMetadata.MappedObjectIdName;
+            //}
+            //else
+            //{
+            //    return false;
+            //}
         }
 
         public static Expression ReplaceParameterType(Expression expression, Type replacementType, Func<Expression, Expression> Visit)

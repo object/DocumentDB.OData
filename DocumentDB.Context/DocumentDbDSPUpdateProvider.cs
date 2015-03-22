@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MongoDB.Bson;
-using MongoDB.Driver.Builders;
 using DataServiceProvider;
 
 namespace DocumentDB.Context
@@ -102,9 +100,9 @@ namespace DocumentDB.Context
         private void InsertDocument(DocumentDbContext dbContext, ResourceChange change)
         {
             var collection = dbContext.Database.GetCollection(change.CollectionName);
-            var document = DocumentDbDSPConverter.CreateBSonDocument(change.Resource, this.dbMetadata, change.CollectionName);
-            collection.Insert(document);
-            change.Resource.SetValue(DocumentDbMetadata.MappedObjectIdName, document.GetValue(DocumentDbMetadata.ProviderObjectIdName).ToString());
+            var document = DocumentDbDSPConverter.CreateJsonDocument(change.Resource, this.dbMetadata, change.CollectionName);
+            //collection.Insert(document);
+            //change.Resource.SetValue(DocumentDbMetadata.MappedObjectIdName, document.GetValue(DocumentDbMetadata.ProviderObjectIdName).ToString());
         }
 
         private void UpdateDocument(DocumentDbContext dbContext, ResourceChange change)
@@ -113,35 +111,35 @@ namespace DocumentDB.Context
                 return;
 
             var collection = dbContext.Database.GetCollection(change.CollectionName);
-            var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(DocumentDbMetadata.MappedObjectIdName).ToString()));
-            UpdateBuilder update = null;
+            //var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(DocumentDbMetadata.MappedObjectIdName).ToString()));
+            //UpdateBuilder update = null;
 
-            foreach (var resourceProperty in change.ModifiedProperties)
-            {
-                if (update == null)
-                {
-                    if (resourceProperty.Value != null)
-                        update = Update.Set(resourceProperty.Key, BsonValue.Create(resourceProperty.Value));
-                    else
-                        update = Update.Unset(resourceProperty.Key);
-                }
-                else
-                {
-                    if (resourceProperty.Value != null)
-                        update = update.Set(resourceProperty.Key, BsonValue.Create(resourceProperty.Value));
-                    else
-                        update = update.Unset(resourceProperty.Key);
-                }
-            }
+            //foreach (var resourceProperty in change.ModifiedProperties)
+            //{
+            //    if (update == null)
+            //    {
+            //        if (resourceProperty.Value != null)
+            //            update = Update.Set(resourceProperty.Key, JsonValue.Create(resourceProperty.Value));
+            //        else
+            //            update = Update.Unset(resourceProperty.Key);
+            //    }
+            //    else
+            //    {
+            //        if (resourceProperty.Value != null)
+            //            update = update.Set(resourceProperty.Key, JsonValue.Create(resourceProperty.Value));
+            //        else
+            //            update = update.Unset(resourceProperty.Key);
+            //    }
+            //}
 
-            collection.Update(query, update);
+            //collection.Update(query, update);
         }
 
         private void RemoveDocument(DocumentDbContext dbContext, ResourceChange change)
         {
             var collection = dbContext.Database.GetCollection(change.CollectionName);
-            var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(DocumentDbMetadata.MappedObjectIdName).ToString()));
-            collection.Remove(query);
+            //var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(change.Resource.GetValue(DocumentDbMetadata.MappedObjectIdName).ToString()));
+            //collection.Remove(query);
         }
     }
 }

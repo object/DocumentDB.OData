@@ -4,7 +4,9 @@ using System.Data.Services.Providers;
 using System.Linq;
 using System.Text;
 using DataServiceProvider;
-using MongoDB.Bson;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentDB.Context.InMemory
 {
@@ -33,7 +35,8 @@ namespace DocumentDB.Context.InMemory
             {
                 var storage = dspContext.GetResourceSetStorage(resourceSet.Name);
                 var collection = dbContext.Database.GetCollection(resourceSet.Name);
-                foreach (var document in collection.FindAll())
+                var query = dbContext.Client.CreateDocumentQuery<JObject>(collection.DocumentsLink);
+                foreach (var document in query)
                 {
                     var resource = DocumentDbDSPConverter.CreateDSPResource(document, this.dbMetadata, resourceSet.Name);
                     storage.Add(resource);
@@ -46,10 +49,10 @@ namespace DocumentDB.Context.InMemory
             }
         }
 
-        private void UpdateMetadataFromResourceSet(DocumentDbContext dbContext, ResourceSet resourceSet, BsonDocument document)
+        private void UpdateMetadataFromResourceSet(DocumentDbContext dbContext, ResourceSet resourceSet, JToken document)
         {
             var resourceType = dbMetadata.ResolveResourceType(resourceSet.Name);
-            foreach (var element in document.Elements)
+            foreach (var element in document)
             {
                 dbMetadata.RegisterResourceProperty(dbContext, resourceType, element);
             }

@@ -15,18 +15,13 @@ namespace DocumentDB.Context.Tests
         {
             _documentClient = new DocumentClient(new Uri(endpointUrl), authorizationKey);
 
-            var database = new Database { Id = databaseName };
-            if (clearDatabase)
+            var database = _documentClient.CreateDatabaseQuery().Where(x => x.Id == databaseName).AsEnumerable().FirstOrDefault();
+            if (clearDatabase && database != null)
             {
                 _documentClient.DeleteDatabaseAsync(database.SelfLink).Wait();
-                database = _documentClient.CreateDatabaseAsync(database).Result.Resource;
+                database = null;
             }
-            else
-            {
-                database = _documentClient.CreateDatabaseQuery().Where(x => x.Id == databaseName).AsEnumerable().FirstOrDefault() ??
-                           _documentClient.CreateDatabaseAsync(new Database { Id = databaseName }).Result.Resource;
-            }
-            _database = database;
+            _database = database ?? _documentClient.CreateDatabaseAsync(new Database { Id = databaseName }).Result.Resource;
         }
 
         public ClientCollection GetCollection(string collectionName)

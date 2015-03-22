@@ -49,11 +49,13 @@ namespace DocumentDB.DataService
         {
             DataServiceHostFactory factory = new DataServiceHostFactory();
             string serverName = Utils.ExtractServerNameFromConnectionString(ConfigurationManager.ConnectionStrings["DocumentDB"].ConnectionString);
-            var databaseNames = DocumentDbContext.GetDatabaseNames(serverName);
-            foreach (var databaseName in databaseNames)
-            {
-                RouteTable.Routes.Add(new ServiceRoute(databaseName, factory, typeof(DocumentDbOData)));
-            }
+            // TODO
+            //var databaseNames = DocumentDbContext.GetDatabaseNames(serverName);
+            //foreach (var databaseName in databaseNames)
+            //{
+            //    RouteTable.Routes.Add(new ServiceRoute(databaseName, factory, typeof(DocumentDbOData)));
+            //}
+            RouteTable.Routes.Add(new ServiceRoute("odatatests", factory, typeof(DocumentDbOData)));
         }
     }
 }

@@ -4,7 +4,9 @@ using System.Data.Services.Providers;
 using System.Linq;
 using System.Text;
 using DataServiceProvider;
-using MongoDB.Bson;
+using Microsoft.Azure.Documents;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentDB.Context
 {
@@ -12,20 +14,20 @@ namespace DocumentDB.Context
     {
         private static DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        public static DSPResource CreateDSPResource(BsonDocument document, DocumentDbMetadata dbMetadata, string resourceName, string ownerPrefix = null)
+        public static DSPResource CreateDSPResource(JToken document, DocumentDbMetadata dbMetadata, string resourceName, string ownerPrefix = null)
         {
             var resourceType = dbMetadata.ResolveResourceType(resourceName, ownerPrefix);
             if (resourceType == null)
                 throw new ArgumentException(string.Format("Unable to resolve resource type {0}", resourceName), "resourceName");
             var resource = new DSPResource(resourceType);
 
-            foreach (var element in document.Elements)
+            foreach (var element in document)
             {
                 var resourceProperty = dbMetadata.ResolveResourceProperty(resourceType, element);
                 if (resourceProperty == null)
                     continue;
 
-                object propertyValue = ConvertBsonValue(element.Value, resourceType, resourceProperty, resourceProperty.Name, dbMetadata);
+                object propertyValue = ConvertJsonValue(element, resourceType, resourceProperty, resourceProperty.Name, dbMetadata);
                 resource.SetValue(resourceProperty.Name, propertyValue);
             }
             AssignNullCollections(resource, resourceType);
@@ -33,9 +35,9 @@ namespace DocumentDB.Context
             return resource;
         }
 
-        public static BsonDocument CreateBSonDocument(DSPResource resource, DocumentDbMetadata dbMetadata, string resourceName)
+        public static JObject CreateJsonDocument(DSPResource resource, DocumentDbMetadata dbMetadata, string resourceName)
         {
-            var document = new BsonDocument();
+            var document = new JObject();
             var resourceSet = dbMetadata.ResolveResourceSet(resourceName);
             if (resourceSet != null)
             {
@@ -44,50 +46,51 @@ namespace DocumentDB.Context
                     var propertyValue = resource.GetValue(property.Name);
                     if (propertyValue != null)
                     {
-                        document.Set(property.Name, BsonValue.Create(propertyValue));
+                        var text = JsonConvert.SerializeObject(propertyValue);
+                        document.Add(property.Name, JObject.Parse(text));
                     }
                 }
             }
             return document;
         }
 
-        private static object ConvertBsonValue(BsonValue bsonValue, ResourceType resourceType, ResourceProperty resourceProperty, string propertyName, DocumentDbMetadata dbMetadata)
+        private static object ConvertJsonValue(JToken jsonValue, ResourceType resourceType, ResourceProperty resourceProperty, string propertyName, DocumentDbMetadata dbMetadata)
         {
-            if (bsonValue == null)
+            if (jsonValue == null)
                 return null;
 
             object propertyValue = null;
             bool convertValue;
 
-            if (bsonValue.GetType() == typeof(BsonDocument))
+            if (jsonValue.GetType() == typeof(Document))
             {
-                var bsonDocument = bsonValue.AsBsonDocument;
-                if (IsCsharpNullDocument(bsonDocument))
-                {
-                    convertValue = false;
-                }
-                else
-                {
-                    propertyValue = CreateDSPResource(bsonDocument, dbMetadata, propertyName,
+                var document = jsonValue;
+                //if (IsCsharpNullDocument(document))
+                //{
+                //    convertValue = false;
+                //}
+                //else
+                //{
+                    propertyValue = CreateDSPResource(document, dbMetadata, propertyName,
                         DocumentDbMetadata.GetQualifiedTypePrefix(resourceType.Name));
                     convertValue = true;
-                }
+                //}
             }
-            else if (bsonValue.GetType() == typeof(BsonArray))
+            else if (jsonValue.GetType() == typeof(JArray))
             {
-                var bsonArray = bsonValue.AsBsonArray;
-                if (bsonArray != null && bsonArray.Count > 0)
-                    propertyValue = ConvertBsonArray(bsonArray, resourceType, propertyName, dbMetadata);
+                var jsonArray = jsonValue.ToArray();
+                if (jsonArray != null && jsonArray.Any())
+                    propertyValue = ConvertJsonArray(JArray.FromObject(jsonArray), resourceType, propertyName, dbMetadata);
                 convertValue = false;
             }
-            else if (bsonValue.GetType() == typeof(BsonNull) && resourceProperty.Kind == ResourcePropertyKind.Collection)
+            else if (jsonValue == null && resourceProperty.Kind == ResourcePropertyKind.Collection) // BsonNull
             {
-                propertyValue = ConvertBsonArray(new BsonArray(0), resourceType, propertyName, dbMetadata);
+                propertyValue = ConvertJsonArray(new JArray(0), resourceType, propertyName, dbMetadata);
                 convertValue = false;
             }
             else
             {
-                propertyValue = ConvertRawValue(bsonValue);
+                propertyValue = ConvertRawValue(jsonValue);
                 convertValue = true;
             }
 
@@ -105,81 +108,82 @@ namespace DocumentDB.Context
             return propertyValue;
         }
 
-        private static object ConvertBsonArray(BsonArray bsonArray, ResourceType resourceType, string propertyName, DocumentDbMetadata dbMetadata)
+        private static object ConvertJsonArray(JArray jsonArray, ResourceType resourceType, string propertyName, DocumentDbMetadata dbMetadata)
         {
-            if (bsonArray == null || bsonArray.Count == 0)
+            if (jsonArray == null || jsonArray.Count == 0)
             {
                 return new object[0];
             }
 
             bool isDocument = false;
             int nonNullItemCount = 0;
-            for (int index = 0; index < bsonArray.Count; index++)
+            for (int index = 0; index < jsonArray.Count; index++)
             {
-                if (bsonArray[index] != BsonNull.Value)
+                if (jsonArray[index] != null) // TODO BsonNull
                 {
-                    if (bsonArray[index].GetType() == typeof(BsonDocument))
+                    if (jsonArray[index].GetType() == typeof(Document))
                         isDocument = true;
                     ++nonNullItemCount;
                 }
             }
             object[] propertyValue = isDocument ? new DSPResource[nonNullItemCount] : new object[nonNullItemCount];
             int valueIndex = 0;
-            for (int index = 0; index < bsonArray.Count; index++)
+            for (int index = 0; index < jsonArray.Count; index++)
             {
-                if (bsonArray[index] != BsonNull.Value)
+                if (jsonArray[index] != null) // TODO BsonNull
                 {
                     if (isDocument)
                     {
-                        propertyValue[valueIndex++] = CreateDSPResource(bsonArray[index].AsBsonDocument, dbMetadata,
+                        propertyValue[valueIndex++] = CreateDSPResource(jsonArray[index], dbMetadata,
                                                                      propertyName,
                                                                      DocumentDbMetadata.GetQualifiedTypePrefix(resourceType.Name));
                     }
                     else
                     {
-                        propertyValue[valueIndex++] = ConvertRawValue(bsonArray[index]);
+                        propertyValue[valueIndex++] = ConvertRawValue(jsonArray[index]);
                     }
                 }
             }
             return propertyValue;
         }
 
-        private static object ConvertRawValue(BsonValue bsonValue)
+        private static object ConvertRawValue(JToken jsonValue)
         {
-            if (bsonValue == null)
+            if (jsonValue == null)
                 return null;
 
-            if (BsonTypeMapper.MapToDotNetValue(bsonValue) != null)
-            {
-                if (bsonValue.IsObjectId)
-                {
-                    return bsonValue.ToString();
-                }
-                else if (bsonValue.IsGuid)
-                {
-                    return bsonValue.AsGuid;
-                }
-                else
-                {
-                    switch (bsonValue.BsonType)
-                    {
-                        case BsonType.DateTime:
-                            return UnixEpoch + TimeSpan.FromMilliseconds(bsonValue.AsBsonDateTime.MillisecondsSinceEpoch);
-                        default:
-                            return BsonTypeMapper.MapToDotNetValue(bsonValue);
-                    }
-                }
-            }
-            else
-            {
-                switch (bsonValue.BsonType)
-                {
-                    case BsonType.Binary:
-                        return bsonValue.AsBsonBinaryData.Bytes;
-                    default:
-                        return BsonTypeMapper.MapToDotNetValue(bsonValue);
-                }
-            }
+            return null;
+            //if (BsonTypeMapper.MapToDotNetValue(jsonValue) != null)
+            //{
+            //    if (jsonValue.IsObjectId)
+            //    {
+            //        return jsonValue.ToString();
+            //    }
+            //    else if (jsonValue.IsGuid)
+            //    {
+            //        return jsonValue.AsGuid;
+            //    }
+            //    else
+            //    {
+            //        //switch (jsonValue.BsonType)
+            //        //{
+            //        //    case BsonType.DateTime:
+            //        //        return UnixEpoch + TimeSpan.FromMilliseconds(jsonValue.AsBsonDateTime.MillisecondsSinceEpoch);
+            //        //    default:
+            //        //        return BsonTypeMapper.MapToDotNetValue(jsonValue);
+            //        //}
+            //    }
+            //}
+            //else
+            //{
+            //    //switch (jsonValue.BsonType)
+            //    //{
+            //    //    case BsonType.Binary:
+            //    //        return jsonValue.AsBsonBinaryData.Bytes;
+            //    //    default:
+            //    //        return BsonTypeMapper.MapToDotNetValue(jsonValue);
+            //    //}
+            //}
         }
 
         private static void AssignNullCollections(DSPResource resource, ResourceType resourceType)
@@ -201,14 +205,14 @@ namespace DocumentDB.Context
             }
         }
 
-        private static bool IsCsharpNullDocument(BsonDocument bsonDocument)
-        {
-            if (bsonDocument.ElementCount == 1)
-            {
-                var element = bsonDocument.Elements.First();
-                return element.Name == "_csharpnull" && element.Value.AsBoolean == true;
-            }
-            return false;
-        }
+        //private static bool IsCsharpNullDocument(JToken document)
+        //{
+        //    if (document.Count() == 1)
+        //    {
+        //        var element = document.First();
+        //        return element.Name == "_csharpnull" && element.Value<bool>();
+        //    }
+        //    return false;
+        //}
     }
 }

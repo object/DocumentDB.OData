@@ -4,15 +4,14 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace DocumentDB.Context.Queryable
 {
     public static class DocumentTypeBuilder
     {
-        private static ConstructorInfo _bsondIdAttributeConstructor = typeof(BsonIdAttribute).GetConstructor(new Type[] { });
+        //private static readonly ConstructorInfo _bsondIdAttributeConstructor = typeof(BsonIdAttribute).GetConstructor(new Type[] { });
 
-        private static Dictionary<string, Type> _cachedTypes = new Dictionary<string, Type>();
+        private static readonly Dictionary<string, Type> _cachedTypes = new Dictionary<string, Type>();
 
         public static Type CompileDocumentType(Type baseType, IDictionary<string, Type> fields)
         {
@@ -49,7 +48,7 @@ namespace DocumentDB.Context.Queryable
 
             foreach (var field in fields)
             {
-                CreateProperty(tb, field.Key, field.Value, field.Key == DocumentDbMetadata.ProviderObjectIdName);
+                CreateProperty(tb, field.Key, field.Value/*, field.Key == DocumentDbMetadata.ProviderObjectIdName*/);
             }
 
             Type objectType = tb.CreateType();
@@ -74,15 +73,15 @@ namespace DocumentDB.Context.Queryable
             return tb;
         }
 
-        private static void CreateProperty(TypeBuilder tb, string propertyName, Type propertyType, bool markAsBsonId = false)
+        private static void CreateProperty(TypeBuilder tb, string propertyName, Type propertyType/*, bool markAsBsonId = false*/)
         {
             FieldBuilder fieldBuilder = tb.DefineField("_" + propertyName, propertyType, FieldAttributes.Private);
 
             PropertyBuilder propertyBuilder = tb.DefineProperty(propertyName, PropertyAttributes.HasDefault, propertyType, null);
-            if (markAsBsonId)
-            {
-                propertyBuilder.SetCustomAttribute(_bsondIdAttributeConstructor, new byte[] { });
-            }
+            //if (markAsBsonId)
+            //{
+            //    propertyBuilder.SetCustomAttribute(_bsondIdAttributeConstructor, new byte[] { });
+            //}
 
             MethodBuilder getPropMthdBldr = tb.DefineMethod("get_" + propertyName, MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyType, Type.EmptyTypes);
             ILGenerator getIl = getPropMthdBldr.GetILGenerator();

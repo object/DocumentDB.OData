@@ -19,7 +19,7 @@ namespace DocumentDB.Context.Tests
             for (int i = 0; i < 100; i++)
             {
                 int hostId = Interlocked.Increment(ref lastHostId);
-                this.serviceUri = new Uri("http://" + Environment.MachineName + "/Temporary_Listen_Addresses/MongoTestService" + hostId.ToString() + "/");
+                this.serviceUri = new Uri("http://" + Environment.MachineName + "/Temporary_Listen_Addresses/DocumentTestService" + hostId.ToString() + "/");
                 this.host = new WebServiceHost(serviceType, this.serviceUri);
                 try
                 {

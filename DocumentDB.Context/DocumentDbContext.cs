@@ -2,63 +2,68 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MongoDB.Driver;
+using Microsoft.Azure.Documents.Client;
 
 namespace DocumentDB.Context
 {
     public partial class DocumentDbContext : IDisposable
     {
-        protected string connectionString;
-        protected MongoClient client;
-        protected MongoServer server;
-        protected MongoDatabase database;
+        protected string _connectionString;
+        protected string _databaseName;
+        protected DocumentClient _documentClient;
+        protected DocumentDatabase _database;
 
         public DocumentDbContext(string connectionString)
         {
-            this.connectionString = connectionString;
-            string databaseName = GetDatabaseName(this.connectionString);
-
-            this.client = new MongoClient(this.connectionString);
-            this.server = this.client.GetServer();
-            this.database = server.GetDatabase(databaseName);
+            _connectionString = connectionString;
+            _documentClient = GetClient(connectionString);
+            _database = new DocumentDatabase(_documentClient, _databaseName);
         }
 
-        public MongoDatabase Database
+        public DocumentClient Client
         {
-            get { return this.database; }
+            get { return _documentClient; }
         }
 
-        public static IEnumerable<string> GetDatabaseNames(string connectionString)
+        public DocumentDatabase Database
         {
-            return new MongoClient(connectionString).GetServer().GetDatabaseNames();
+            get { return _database; }
         }
 
         public void Dispose()
         {
-            this.database.Server.Disconnect();
+            // TODO
         }
 
         public void SaveChanges()
         {
         }
 
-        private string GetDatabaseName(string connectionString)
+        private DocumentClient GetClient(string connectionString)
         {
-            var hostIndex = connectionString.IndexOf("//");
-            if (hostIndex > 0)
+            var endpointUrl = string.Empty;
+            var authorizationKey = string.Empty;
+            var databaseName = string.Empty;
+            foreach (var item in connectionString.Split(';'))
             {
-                int startIndex = connectionString.IndexOf("/", hostIndex + 2) + 1;
-                int endIndex = connectionString.IndexOf("?", startIndex);
-                if (startIndex > 0)
+                var key = item.Substring(0, item.IndexOf('='));
+                var value = item.Substring(key.Length + 1);
+                switch (key)
                 {
-                    if (endIndex > 0)
-                        return connectionString.Substring(startIndex, endIndex - startIndex);
-                    else
-                        return connectionString.Substring(startIndex);
+                    case "EndpointUrl":
+                        endpointUrl = value;
+                        break;
+                    case "AuthorizationKey":
+                        authorizationKey = value;
+                        break;
+                    case "Database":
+                        databaseName = value;
+                        break;
                 }
             }
 
-            throw new ArgumentException("Unsupported DocumentDB connection string", "connectionString");
+            _databaseName = databaseName;
+            return new DocumentClient(new Uri(endpointUrl), authorizationKey);
         }
     }
 }

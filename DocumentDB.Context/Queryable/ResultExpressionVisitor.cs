@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using DataServiceProvider;
-using MongoDB.Bson;
+using Microsoft.Azure.Documents;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -13,7 +13,7 @@ namespace DocumentDB.Context.Queryable
         {
             if (m.Method == GetValueMethodInfo)
             {
-                if (m.Arguments[0].Type == typeof(BsonDocument))
+                if (m.Arguments[0].Type == typeof(Document))
                 {
                     return Expression.Call(
                         m.Method,

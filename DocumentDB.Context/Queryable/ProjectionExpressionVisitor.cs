@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using DataServiceProvider;
-using MongoDB.Bson;
+using Microsoft.Azure.Documents;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -11,7 +11,7 @@ namespace DocumentDB.Context.Queryable
     {
         public override Expression VisitParameter(ParameterExpression p)
         {
-            if (p.Type == typeof(BsonDocument))
+            if (p.Type == typeof(Document))
             {
                 return Expression.Parameter(typeof(DSPResource), p.Name);
             }
@@ -31,7 +31,7 @@ namespace DocumentDB.Context.Queryable
                     typeof(DSPResource).GetMethod("GetValue", new Type[] { typeof(string) }),
                     callExpression.Arguments));
             }
-            if (u.NodeType == ExpressionType.TypeAs && u.Type == typeof(BsonDocument))
+            if (u.NodeType == ExpressionType.TypeAs && u.Type == typeof(Document))
             {
                 return Expression.TypeAs(u.Operand, typeof (DSPResource));
             }

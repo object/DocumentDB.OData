@@ -5,8 +5,10 @@ using System.Data.Services.Providers;
 using System.Linq;
 using System.Text;
 using DataServiceProvider;
-using MongoDB.Bson;
-using MongoDB.Driver.Builders;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
+using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentDB.Context
 {
@@ -99,7 +101,7 @@ namespace DocumentDB.Context
             return resourceType;
         }
 
-        public ResourceProperty ResolveResourceProperty(ResourceType resourceType, BsonElement element)
+        public ResourceProperty ResolveResourceProperty(ResourceType resourceType, JToken element)
         {
             var propertyName = DocumentDbMetadata.GetResourcePropertyName(element, resourceType.ResourceTypeKind);
             return ResolveResourceProperty(resourceType, propertyName);
@@ -112,7 +114,8 @@ namespace DocumentDB.Context
 
         private IEnumerable<string> GetCollectionNames(DocumentDbContext context)
         {
-            return context.Database.GetCollectionNames().Where(x => !x.StartsWith("system."));
+            //return context.Database.GetCollectionNames().Where(x => !x.StartsWith("system."));
+            return null;
         }
 
         private void PopulateMetadata(DocumentDbContext context)
@@ -150,11 +153,13 @@ namespace DocumentDB.Context
         private void PopulateMetadataFromCollection(DocumentDbContext context, string collectionName, ResourceSet resourceSet)
         {
             var collection = context.Database.GetCollection(collectionName);
-            const string naturalSort = "$natural";
-            var sortOrder = this.Configuration.FetchPosition == DocumentDbConfiguration.FetchPosition.End
-                                ? SortBy.Descending(naturalSort)
-                                : SortBy.Ascending(naturalSort);
-            var documents = collection.FindAll().SetSortOrder(sortOrder);
+            //const string naturalSort = "$natural";
+            //var sortOrder = this.Configuration.FetchPosition == DocumentDbConfiguration.FetchPosition.End
+            //                    ? SortBy.Descending(naturalSort)
+            //                    : SortBy.Ascending(naturalSort);
+            //var documents = collection.FindAll().SetSortOrder(sortOrder);
+
+            var documents = context.Client.CreateDocumentQuery<JObject>(collection.DocumentsLink);
 
             int rowCount = 0;
             foreach (var document in documents)
@@ -179,21 +184,21 @@ namespace DocumentDB.Context
             return this.instanceMetadataCache.ResolveResourceSet(resourceName);
         }
 
-        private ResourceSet AddResourceSet(DocumentDbContext context, string collectionName, BsonDocument document = null)
+        private ResourceSet AddResourceSet(DocumentDbContext context, string collectionName, JToken document = null)
         {
             AddDocumentType(context, collectionName, document, ResourceTypeKind.EntityType);
             return this.instanceMetadataCache.ResolveResourceSet(collectionName);
         }
 
-        private void UpdateResourceSet(DocumentDbContext context, ResourceSet resourceSet, BsonDocument document)
+        private void UpdateResourceSet(DocumentDbContext context, ResourceSet resourceSet, JToken document)
         {
-            foreach (var element in document.Elements)
+            foreach (var element in document)
             {
                 RegisterDocumentProperty(context, resourceSet.ResourceType, element);
             }
         }
 
-        private ResourceType AddDocumentType(DocumentDbContext context, string collectionName, BsonDocument document, ResourceTypeKind resourceTypeKind)
+        private ResourceType AddDocumentType(DocumentDbContext context, string collectionName, JToken document, ResourceTypeKind resourceTypeKind)
         {
             var collectionType = resourceTypeKind == ResourceTypeKind.EntityType
                                      ? this.instanceMetadataCache.AddEntityType(collectionName)
@@ -202,7 +207,7 @@ namespace DocumentDB.Context
             bool hasObjectId = false;
             if (document != null)
             {
-                foreach (var element in document.Elements)
+                foreach (var element in document)
                 {
                     RegisterResourceProperty(context, collectionType, element);
                     if (IsObjectId(element))
@@ -216,7 +221,7 @@ namespace DocumentDB.Context
                 {
                     this.instanceMetadataCache.AddKeyProperty(collectionType, MappedObjectIdName, MappedObjectIdType);
                 }
-                AddProviderType(collectionName, ProviderObjectIdName, BsonObjectId.Empty, true);
+                //AddProviderType(collectionName, ProviderObjectIdName, BsonObjectId.Empty, true);
             }
 
             if (resourceTypeKind == ResourceTypeKind.EntityType)
@@ -225,16 +230,16 @@ namespace DocumentDB.Context
             return collectionType;
         }
 
-        internal void RegisterResourceProperty(DocumentDbContext context, ResourceType resourceType, BsonElement element)
+        internal void RegisterResourceProperty(DocumentDbContext context, ResourceType resourceType, JToken element)
         {
-            var collectionProperty = new CollectionProperty { CollectionType = resourceType, PropertyName = element.Name };
+            var collectionProperty = new CollectionProperty { CollectionType = resourceType, PropertyName = (element as JProperty).Name };
             var resourceProperty = ResolveResourceProperty(resourceType, element);
             if (resourceProperty == null)
             {
                 lock (unresolvedProperties)
                 {
                     var unresolvedEarlier = unresolvedProperties.Contains(collectionProperty);
-                    var resolvedNow = ResolveProviderType(element.Value, IsObjectId(element)) != null;
+                    var resolvedNow = ResolveProviderType(element, IsObjectId(element)) != null;
 
                     if (!unresolvedEarlier && !resolvedNow)
                         this.unresolvedProperties.Add(collectionProperty);
@@ -250,11 +255,11 @@ namespace DocumentDB.Context
         }
 
         private void AddResourceProperty(DocumentDbContext context, string collectionName, ResourceType collectionType,
-            BsonElement element, bool treatObjectIdAsKey = false)
+            JToken element, bool treatObjectIdAsKey = false)
         {
             var elementType = GetElementType(element, treatObjectIdAsKey);
             var propertyName = GetResourcePropertyName(element, collectionType.ResourceTypeKind);
-            var propertyValue = element.Value;
+            var propertyValue = element;
 
             if (string.IsNullOrEmpty(propertyName))
                 return;
@@ -268,11 +273,11 @@ namespace DocumentDB.Context
                     this.instanceMetadataCache.AddPrimitiveProperty(collectionType, propertyName, elementType);
                 isKey = true;
             }
-            else if (elementType == typeof(BsonDocument))
+            else if (elementType == typeof(Document))
             {
                 AddDocumentProperty(context, collectionName, collectionType, propertyName, element);
             }
-            else if (elementType == typeof(BsonArray))
+            else if (elementType == typeof(JArray))
             {
                 RegisterArrayProperty(context, collectionType, element);
             }
@@ -287,7 +292,7 @@ namespace DocumentDB.Context
             }
         }
 
-        private void RegisterDocumentProperties(DocumentDbContext context, ResourceType collectionType, BsonElement element)
+        private void RegisterDocumentProperties(DocumentDbContext context, ResourceType collectionType, JToken element)
         {
             var resourceName = GetResourcePropertyName(element, ResourceTypeKind.EntityType);
             var resourceType = ResolveResourceType(resourceName, collectionType.Name);
@@ -297,31 +302,31 @@ namespace DocumentDB.Context
             }
             else
             {
-                foreach (var documentElement in element.Value.AsBsonDocument.Elements)
+                foreach (var documentElement in element)
                 {
                     RegisterDocumentProperty(context, resourceType, documentElement);
                 }
             }
         }
 
-        private void RegisterDocumentProperty(DocumentDbContext context, ResourceType resourceType, BsonElement element)
+        private void RegisterDocumentProperty(DocumentDbContext context, ResourceType resourceType, JToken element)
         {
             var resourceProperty = ResolveResourceProperty(resourceType, element);
             if (resourceProperty == null)
             {
                 RegisterResourceProperty(context, resourceType, element);
             }
-            else if ((resourceProperty.Kind & ResourcePropertyKind.ComplexType) != 0 && element.Value != BsonNull.Value)
+            else if ((resourceProperty.Kind & ResourcePropertyKind.ComplexType) != 0 && element != null) // BsonNull
             {
                 RegisterDocumentProperties(context, resourceType, element);
             }
-            else if ((resourceProperty.Kind & ResourcePropertyKind.Collection) != 0 && element.Value != BsonNull.Value)
+            else if ((resourceProperty.Kind & ResourcePropertyKind.Collection) != 0 && element != null) // BsonNull
             {
                 RegisterArrayProperty(context, resourceType, element);
             }
         }
 
-        private void AddDocumentProperty(DocumentDbContext context, string collectionName, ResourceType collectionType, string propertyName, BsonElement element, bool isCollection = false)
+        private void AddDocumentProperty(DocumentDbContext context, string collectionName, ResourceType collectionType, string propertyName, JToken element, bool isCollection = false)
         {
             ResourceType resourceType = null;
             var resourceSet = this.instanceMetadataCache.ResolveResourceSet(collectionName);
@@ -332,7 +337,7 @@ namespace DocumentDB.Context
             else
             {
                 resourceType = AddDocumentType(context, GetQualifiedTypeName(collectionName, propertyName),
-                                                    element.Value.AsBsonDocument, ResourceTypeKind.ComplexType);
+                                                    element, ResourceTypeKind.ComplexType);
             }
             if (isCollection && ResolveResourceProperty(collectionType, propertyName) == null)
                 this.instanceMetadataCache.AddCollectionProperty(collectionType, propertyName, resourceType);
@@ -340,35 +345,35 @@ namespace DocumentDB.Context
                 this.instanceMetadataCache.AddComplexProperty(collectionType, propertyName, resourceType);
         }
 
-        private void RegisterArrayProperty(DocumentDbContext context, ResourceType collectionType, BsonElement element)
+        private void RegisterArrayProperty(DocumentDbContext context, ResourceType collectionType, JToken element)
         {
             var propertyName = GetResourcePropertyName(element, ResourceTypeKind.EntityType);
-            var bsonArray = element.Value.AsBsonArray;
-            if (bsonArray != null)
+            var jsonArray = element.ToArray();
+            if (jsonArray != null)
             {
-                foreach (var arrayValue in bsonArray)
+                foreach (var arrayValue in jsonArray)
                 {
-                    if (arrayValue.AsBsonValue == BsonNull.Value)
+                    if (arrayValue == null) // TODO: BsonNull
                         continue;
 
-                    if (arrayValue.BsonType == BsonType.Document)
+                    if (arrayValue.Type == JTokenType.Object)
                     {
-                        RegisterDocumentProperties(context, collectionType, new BsonElement(element.Name, arrayValue));
+                        RegisterDocumentProperties(context, collectionType, new JProperty((element as JProperty).Name, arrayValue));
                     }
                     else if (ResolveResourceProperty(collectionType, propertyName) == null)
                     {
                         // OData protocol doesn't support collections of collections
-                        if (arrayValue.BsonType != BsonType.Array)
+                        if (arrayValue.Type != JTokenType.Array)
                         {
-                            var mappedType = BsonTypeMapper.MapToDotNetValue(arrayValue).GetType();
-                            this.instanceMetadataCache.AddCollectionProperty(collectionType, propertyName, mappedType);
+                            //var mappedType = BsonTypeMapper.MapToDotNetValue(arrayValue).GetType();
+                            //this.instanceMetadataCache.AddCollectionProperty(collectionType, propertyName, mappedType);
                         }
                     }
                 }
             }
         }
 
-        private void AddProviderType(string collectionName, string elementName, BsonValue elementValue, bool isKey = false)
+        private void AddProviderType(string collectionName, string elementName, JToken elementValue, bool isKey = false)
         {
             Type providerType = ResolveProviderType(elementValue, isKey);
             var qualifiedName = GetQualifiedPropertyName(collectionName, elementName);
@@ -378,74 +383,77 @@ namespace DocumentDB.Context
             }
         }
 
-        private static Type ResolveProviderType(BsonValue elementValue, bool isKey)
+        private static Type ResolveProviderType(JToken elementValue, bool isKey)
         {
-            if (elementValue.GetType() == typeof(BsonArray) || elementValue.GetType() == typeof(BsonDocument))
+            if (elementValue.GetType() == typeof(JArray) || elementValue.GetType() == typeof(Document))
             {
                 return elementValue.GetType();
             }
-            else if (BsonTypeMapper.MapToDotNetValue(elementValue) != null)
-            {
-                return GetRawValueType(elementValue, isKey);
-            }
+            //else if (BsonTypeMapper.MapToDotNetValue(elementValue) != null)
+            //{
+            //    return GetRawValueType(elementValue, isKey);
+            //}
             else
             {
                 return null;
             }
         }
 
-        private static bool IsObjectId(BsonElement element)
+        private static bool IsObjectId(JToken element)
         {
-            return element.Name == DocumentDbMetadata.ProviderObjectIdName;
+            return (element as JProperty).Name == DocumentDbMetadata.ProviderObjectIdName;
         }
 
-        private static Type GetElementType(BsonElement element, bool treatObjectIdAsKey)
+        private static Type GetElementType(JToken element, bool treatObjectIdAsKey)
         {
             if (IsObjectId(element))
             {
-                if (element.Value.GetType() == ProviderObjectIdType && treatObjectIdAsKey)
+                if (element.GetType() == ProviderObjectIdType && treatObjectIdAsKey)
                     return MappedObjectIdType;
                 else
-                    return GetRawValueType(element.Value, treatObjectIdAsKey);
+                    return GetRawValueType(element, treatObjectIdAsKey);
             }
-            else if (element.Value.GetType() == typeof (BsonObjectId))
+            else if (element.GetType() == typeof (BsonObjectId))
             {
                 return MappedObjectIdType;
             }
-            else if (element.Value.GetType() == typeof(BsonArray) || element.Value.GetType() == typeof(BsonDocument))
+            else if (element.GetType() == typeof(JArray) || element.GetType() == typeof(Document))
             {
-                return element.Value.GetType();
+                return element.GetType();
             }
-            else if (BsonTypeMapper.MapToDotNetValue(element.Value) != null)
-            {
-                return GetRawValueType(element.Value);
-            }
+            //else if (BsonTypeMapper.MapToDotNetValue(element.Value) != null)
+            //{
+            //    return GetRawValueType(element);
+            //}
             else
             {
-                switch (element.Value.BsonType)
+                switch (element.Type)
                 {
-                    case BsonType.Null:
-                        return typeof(object);
-                    case BsonType.Binary:
-                        return typeof(byte[]);
+                    //case BsonType.Null:
+                    //    return typeof(object);
+                    //case BsonType.Binary:
+                    //    return typeof(byte[]);
                     default:
                         return typeof(string);
                 }
             }
         }
 
-        private static Type GetRawValueType(BsonValue elementValue, bool isKey = false)
+        private static Type GetRawValueType(JToken elementValue, bool isKey = false)
         {
             Type elementType;
-            switch (elementValue.BsonType)
+            switch (elementValue.Type)
             {
-                case BsonType.DateTime:
-                    elementType = typeof(DateTime);
+                case JTokenType.Date:
+                    elementType = typeof (DateTime);
                     break;
                 default:
-                    elementType = BsonTypeMapper.MapToDotNetValue(elementValue).GetType();
+                    // TODO
+                    elementType = typeof (object);
+                    //elementType = BsonTypeMapper.MapToDotNetValue(elementValue).GetType();
                     break;
             }
+
             if (!isKey && elementType.IsValueType)
             {
                 elementType = typeof(Nullable<>).MakeGenericType(elementType);
@@ -468,11 +476,11 @@ namespace DocumentDB.Context
             return string.Join(".", typeName, propertyName);
         }
 
-        private static string GetResourcePropertyName(BsonElement element, ResourceTypeKind resourceTypeKind)
+        private static string GetResourcePropertyName(JToken element, ResourceTypeKind resourceTypeKind)
         {
             return IsObjectId(element) && resourceTypeKind != ResourceTypeKind.ComplexType ?
                 DocumentDbMetadata.MappedObjectIdName :
-                NormalizeResourcePropertyName(element.Name);
+                NormalizeResourcePropertyName((element as JProperty).Name);
         }
 
         private static string NormalizeResourcePropertyName(string propertyName)

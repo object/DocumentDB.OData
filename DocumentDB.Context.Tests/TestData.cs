@@ -199,18 +199,18 @@ namespace DocumentDB.Context.Tests
                     "Colors", 
                     "Facebook", 
                     "Flickr", 
-                    "GoogleMaps", 
-                    "iPhone", 
-                    "Twitter", 
-                    "YouTube", 
-                    "Nested", 
-                    "ArrayOfNested", 
-                    "ArrayInArray", 
-                    "EmptyArray", 
-                    "NullArray",
-                    "UnresolvedArray",
-                    "UnresolvedProperty",
-                    "EmptyProperty",
+                    //"GoogleMaps", 
+                    //"iPhone", 
+                    //"Twitter", 
+                    //"YouTube", 
+                    //"Nested", 
+                    //"ArrayOfNested", 
+                    //"ArrayInArray", 
+                    //"EmptyArray", 
+                    //"NullArray",
+                    //"UnresolvedArray",
+                    //"UnresolvedProperty",
+                    //"EmptyProperty",
                 };
 
             foreach (var collectionName in jsonSamples)
@@ -264,7 +264,7 @@ namespace DocumentDB.Context.Tests
                 }
             }
 
-            return new ClientDatabase(endpointUrl, authorizationKey, databaseName);
+            return new ClientDatabase(endpointUrl, authorizationKey, databaseName, clear);
         }
 
         private static string GetResourceAsString(string resourceName)

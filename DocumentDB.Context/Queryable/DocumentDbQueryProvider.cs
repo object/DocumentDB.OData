@@ -6,10 +6,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using DataServiceProvider;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.Builders;
-using MongoDB.Driver.Linq;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -67,45 +67,47 @@ namespace DocumentDB.Context.Queryable
 
         public IEnumerator<TElement> ExecuteQuery<TElement>(Expression expression)
         {
-            MongoCollection mongoCollection;
+            DocumentCollection documentCollection;
             Expression mongoExpression;
             MethodInfo method;
 
-            PrepareExecution(expression, "GetEnumerableCollection", out mongoCollection, out mongoExpression, out method);
+            PrepareExecution(expression, "GetEnumerableCollection", out documentCollection, out mongoExpression, out method);
 
-            var resourceEnumerable = method.Invoke(this, new object[] { mongoCollection, mongoExpression }) as IEnumerable<DSPResource>;
+            var resourceEnumerable = method.Invoke(this, new object[] { documentCollection, mongoExpression }) as IEnumerable<DSPResource>;
             return resourceEnumerable.GetEnumerator() as IEnumerator<TElement>;
         }
 
         public object ExecuteNonQuery(Expression expression)
         {
-            MongoCollection mongoCollection;
+            DocumentCollection documentCollection;
             Expression mongoExpression;
             MethodInfo method;
 
-            PrepareExecution(expression, "GetExecutionResult", out mongoCollection, out mongoExpression, out method);
+            PrepareExecution(expression, "GetExecutionResult", out documentCollection, out mongoExpression, out method);
 
-            return method.Invoke(this, new object[] { mongoCollection, mongoExpression });
+            return method.Invoke(this, new object[] { documentCollection, mongoExpression });
         }
 
-        private void PrepareExecution(Expression expression, string methodName, out MongoCollection mongoCollection, out Expression mongoExpression, out MethodInfo method)
+        private void PrepareExecution(Expression expression, string methodName, out DocumentCollection documentCollection, out Expression mongoExpression, out MethodInfo method)
         {
-            mongoCollection = this.dbContext.Database.GetCollection(collectionType, collectionName);
-            mongoExpression = new QueryExpressionVisitor(mongoCollection, this.dbMetadata, collectionType).Visit(expression);
+            documentCollection = this.dbContext.Database.GetCollection(collectionName);
+            mongoExpression = new QueryExpressionVisitor(documentCollection, this.dbMetadata, collectionType).Visit(expression);
 
             var genericMethod = this.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
             method = genericMethod.MakeGenericMethod(collectionType);
         }
 
-        private IEnumerable<DSPResource> GetEnumerableCollection<TSource>(MongoCollection mongoCollection, Expression expression)
+        private IEnumerable<DSPResource> GetEnumerableCollection<TSource>(DocumentCollection documentCollection, Expression expression)
         {
-            var mongoEnumerator = mongoCollection.AsQueryable<TSource>().Provider.CreateQuery<TSource>(expression).GetEnumerator();
-            return GetEnumerable(mongoEnumerator);
+            var enumerator = dbContext.Client.CreateDocumentQuery<TSource>(documentCollection.DocumentsLink)
+                .Provider.CreateQuery<TSource>(expression).GetEnumerator();
+            return GetEnumerable(enumerator);
         }
 
-        private object GetExecutionResult<TSource>(MongoCollection mongoCollection, Expression expression)
+        private object GetExecutionResult<TSource>(DocumentCollection documentCollection, Expression expression)
         {
-            return mongoCollection.AsQueryable<TSource>().Provider.Execute(expression);
+            return dbContext.Client.CreateDocumentQuery<TSource>(documentCollection.DocumentsLink)
+                .Provider.Execute(expression);
         }
 
         private IEnumerable<DSPResource> GetEnumerable<TSource>(IEnumerator<TSource> enumerator)
@@ -119,27 +121,28 @@ namespace DocumentDB.Context.Queryable
 
         private DSPResource CreateDSPResource<TSource>(TSource document, string resourceName)
         {
-            var typedDocument = document.ToBsonDocument();
-            var resource = DocumentDbDSPConverter.CreateDSPResource(typedDocument, this.dbMetadata, resourceName);
+            var typedDocument = document;
+            var text = JsonConvert.SerializeObject(typedDocument);
+            var resource = DocumentDbDSPConverter.CreateDSPResource(JObject.Parse(text), this.dbMetadata, resourceName);
 
             if (this.dbMetadata.Configuration.UpdateDynamically)
             {
-                UpdateMetadataFromResourceSet(resourceName, typedDocument);
+                UpdateMetadataFromResourceSet(resourceName, JObject.Parse(text));
             }
 
             return resource;
         }
 
-        private void UpdateMetadataFromResourceSet(string resourceName, BsonDocument typedDocument)
+        private void UpdateMetadataFromResourceSet(string resourceName, JToken typedDocument)
         {
             var resourceType = dbMetadata.ResolveResourceType(resourceName);
             var collection = dbContext.Database.GetCollection(resourceName);
-            var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(typedDocument.GetValue(DocumentDbMetadata.ProviderObjectIdName).ToString()));
-            var bsonDocument = collection.FindOne(query);
-            foreach (var element in bsonDocument.Elements)
-            {
-                dbMetadata.RegisterResourceProperty(this.dbContext, resourceType, element);
-            }
+            //var query = Query.EQ(DocumentDbMetadata.ProviderObjectIdName, ObjectId.Parse(typedDocument.GetValue(DocumentDbMetadata.ProviderObjectIdName).ToString()));
+            //var document = collection.FindOne(query);
+            //foreach (var element in document.Elements)
+            //{
+            //    dbMetadata.RegisterResourceProperty(this.dbContext, resourceType, element);
+            //}
         }
 
         private IQueryable<TElement> CreateProjectionQuery<TElement>(Expression expression)
