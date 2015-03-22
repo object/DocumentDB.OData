@@ -52,7 +52,7 @@ namespace DocumentDB.Context.Tests
         protected ISchema GetSchema(string uri = null)
         {
             var client = new ODataClient(uri ?? service.ServiceUri.AbsoluteUri);
-            return client.Schema;
+            return client.GetSchemaAsync().Result;
         }
 
         protected void ValidateColumnNullability(ISchema schema)
