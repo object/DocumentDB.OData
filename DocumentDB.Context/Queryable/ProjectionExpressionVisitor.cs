@@ -11,7 +11,7 @@ namespace DocumentDB.Context.Queryable
     {
         public override Expression VisitParameter(ParameterExpression p)
         {
-            if (p.Type == typeof(Document))
+            if (p.Type == typeof(Document))  // JObject?
             {
                 return Expression.Parameter(typeof(DSPResource), p.Name);
             }
@@ -31,7 +31,7 @@ namespace DocumentDB.Context.Queryable
                     typeof(DSPResource).GetMethod("GetValue", new Type[] { typeof(string) }),
                     callExpression.Arguments));
             }
-            if (u.NodeType == ExpressionType.TypeAs && u.Type == typeof(Document))
+            if (u.NodeType == ExpressionType.TypeAs && u.Type == typeof(Document)) // JObject?
             {
                 return Expression.TypeAs(u.Operand, typeof (DSPResource));
             }

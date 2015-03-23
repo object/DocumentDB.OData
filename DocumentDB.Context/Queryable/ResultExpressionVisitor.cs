@@ -13,7 +13,7 @@ namespace DocumentDB.Context.Queryable
         {
             if (m.Method == GetValueMethodInfo)
             {
-                if (m.Arguments[0].Type == typeof(Document))
+                if (m.Arguments[0].Type == typeof(Document)) // JObject?
                 {
                     return Expression.Call(
                         m.Method,

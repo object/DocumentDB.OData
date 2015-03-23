@@ -54,7 +54,7 @@ namespace DocumentDB.Context.InMemory
             var resourceType = dbMetadata.ResolveResourceType(resourceSet.Name);
             foreach (var element in document)
             {
-                dbMetadata.RegisterResourceProperty(dbContext, resourceType, element);
+                dbMetadata.RegisterResourceProperty(dbContext, resourceType, element as JProperty);
             }
         }
     }
