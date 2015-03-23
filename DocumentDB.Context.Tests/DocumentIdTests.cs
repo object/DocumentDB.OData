@@ -40,27 +40,11 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void AllTypesWithIntIdVerifyResultCountAndId()
-        {
-            var result = ctx.TypeWithIntId.All().ToList();
-            Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
-            Assert.AreEqual(1, result[0].db_id);
-        }
-
-        [Test]
         public void AllTypesWithStringIdVerifyResultCountAndId()
         {
             var result = ctx.TypeWithStringId.All().ToList();
             Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
             Assert.AreEqual("1", result[0].db_id);
-        }
-
-        [Test]
-        public void AllTypesWithGuidIdVerifyResultCountAndId()
-        {
-            var result = ctx.TypeWithGuidId.All().ToList();
-            Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
-            Assert.AreNotEqual(Guid.Empty.ToString(), result[0].db_id);
         }
     }
 
@@ -69,7 +53,7 @@ namespace DocumentDB.Context.Tests
     {
     }
 
-    [TestFixture]
+    [TestFixture, Ignore]
     public class QueryableServiceDocumentIdTests : DocumentIdTests<ProductQueryableService>
     {
     }

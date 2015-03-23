@@ -33,7 +33,7 @@ namespace DocumentDB.Context.Tests
 
     public class ClientProduct
     {
-        public int ID { get; set; }
+        public int ProductID { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public DateTime ReleaseDate { get; set; }
@@ -51,7 +51,7 @@ namespace DocumentDB.Context.Tests
             this.Products = new List<ClientProduct>();
         }
 
-        public int ID { get; set; }
+        public int CategoryID { get; set; }
         public string Name { get; set; }
         public List<ClientProduct> Products { get; set; }
     }
@@ -101,18 +101,6 @@ namespace DocumentDB.Context.Tests
     public class TypeWithStringId
     {
         public string Id { get; set; }
-        public string Name { get; set; }
-    }
-
-    public class TypeWithIntId
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-    }
-
-    public class TypeWithGuidId
-    {
-        public Guid Id { get; set; }
         public string Name { get; set; }
     }
 

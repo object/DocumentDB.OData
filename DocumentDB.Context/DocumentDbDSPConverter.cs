@@ -81,7 +81,7 @@ namespace DocumentDB.Context
             }
             else
             {
-                propertyValue = ConvertRawValue(element);
+                propertyValue = ConvertRawValue(element.Value as JValue);
                 convertValue = true;
             }
 
@@ -131,25 +131,25 @@ namespace DocumentDB.Context
                     }
                     else
                     {
-                        propertyValue[valueIndex++] = ConvertRawValue(jsonArray[index] as JProperty);
+                        propertyValue[valueIndex++] = ConvertRawValue(jsonArray[index] as JValue);
                     }
                 }
             }
             return propertyValue;
         }
 
-        private static object ConvertRawValue(JProperty element)
+        private static object ConvertRawValue(JValue elementValue)
         {
-            if (element == null || element.Value == null)
+            if (elementValue == null)
                 return null;
 
-            if (DocumentDbMetadata.MapToDotNetType(element.Value) != null)
+            if (DocumentDbMetadata.MapToDotNetType(elementValue) != null)
             {
-                return element.Value;
+                return elementValue.Value;
             }
             else
             {
-                switch (element.Value.Type)
+                switch (elementValue.Type)
                 {
                     case JTokenType.Null:
                     default:

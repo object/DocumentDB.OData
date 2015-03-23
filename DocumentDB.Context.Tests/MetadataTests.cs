@@ -162,7 +162,7 @@ namespace DocumentDB.Context.Tests
         }
     }
 
-    [TestFixture]
+    [TestFixture, Ignore]
     public class QueryableServiceMetadataTests : MetadataTests<ProductQueryableService>
     {
         protected override void ResetDSPMetadata()

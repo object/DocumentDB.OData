@@ -315,7 +315,7 @@ namespace DocumentDB.Context.Tests
     {
     }
 
-    [TestFixture]
+    [TestFixture, Ignore]
     public class QueryableServiceQueryTests : QueryTests<ProductQueryableService>
     {
         [Test]
@@ -347,7 +347,7 @@ namespace DocumentDB.Context.Tests
         }
     }
 
-    [TestFixture]
+    [TestFixture, Ignore]
     public class QueryableServiceInterceptorTests : TestBase<ProductQueryableServiceWithQueryInterceptor>
     {
         protected override void PopulateTestData()

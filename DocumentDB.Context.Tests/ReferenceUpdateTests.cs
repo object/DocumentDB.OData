@@ -117,7 +117,7 @@ namespace DocumentDB.Context.Tests
     {
     }
 
-    [TestFixture]
+    [TestFixture, Ignore]
     public class QueryableServiceReferenceUpdateTests : ReferenceUpdateTests<ProductQueryableService>
     {
     }

@@ -66,7 +66,7 @@ namespace DocumentDB.Context.Tests
             products.Insert(
                 new ClientProduct
                     {
-                        ID = 1,
+                        ProductID = 1,
                         Name = "Bread",
                         Description = "Whole grain bread",
                         ReleaseDate = new DateTime(1992, 1, 1),
@@ -91,7 +91,7 @@ namespace DocumentDB.Context.Tests
             products.Insert(
                 new ClientProduct
                     {
-                        ID = 2,
+                        ProductID = 2,
                         Name = "Milk",
                         Description = "Low fat milk",
                         ReleaseDate = new DateTime(1995, 10, 21),
@@ -115,7 +115,7 @@ namespace DocumentDB.Context.Tests
             products.Insert(
                 new ClientProduct
                     {
-                        ID = 3,
+                        ProductID = 3,
                         Name = "Wine",
                         Description = "Red wine, year 2003",
                         ReleaseDate = new DateTime(2003, 11, 24),
@@ -193,20 +193,10 @@ namespace DocumentDB.Context.Tests
             typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "B" });
             typesWithoutExplicitId.Insert(new TypeWithoutExplicitId { Name = "C" });
 
-            var typeWithIntId = database.GetCollection("TypeWithIntId");
-            typeWithIntId.Insert(new TypeWithIntId { Id = 1, Name = "A" });
-            typeWithIntId.Insert(new TypeWithIntId { Id = 2, Name = "B" });
-            typeWithIntId.Insert(new TypeWithIntId { Id = 3, Name = "C" });
-
             var typeWithStringId = database.GetCollection("TypeWithStringId");
             typeWithStringId.Insert(new TypeWithStringId { Id = "1", Name = "A" });
             typeWithStringId.Insert(new TypeWithStringId { Id = "2", Name = "B" });
             typeWithStringId.Insert(new TypeWithStringId { Id = "3", Name = "C" });
-
-            var typeWithGuidId = database.GetCollection("TypeWithGuidId");
-            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "A" });
-            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "B" });
-            typeWithGuidId.Insert(new TypeWithGuidId { Id = Guid.NewGuid(), Name = "C" });
         }
 
         public static void PopulateWithJsonSamples(bool clearDatabase = true)
