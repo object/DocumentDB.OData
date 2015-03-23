@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
 
 namespace DocumentDB.Context.Tests
@@ -51,15 +52,15 @@ namespace DocumentDB.Context.Tests
         public void VerifyClrTypes()
         {
             var clr = ctx.ClrTypes.All().First();
-            Assert.AreEqual(new[] { (byte)1 }, clr.BinaryValue, "The BinaryValue is not correctly filled.");
+            Assert.AreEqual(new Byte[] {1}, Convert.FromBase64String(clr.BinaryValue), "The BinaryValue is not correctly filled.");
             Assert.AreEqual(true, clr.BoolValue, "The BoolValue is not correctly filled.");
             Assert.AreEqual(true, clr.NullableBoolValue, "The NullableBoolValue is not correctly filled.");
             Assert.AreEqual(new DateTime(2012, 1, 1), clr.DateTimeValue, "The DateTimeValue is not correctly filled.");
             Assert.AreEqual(new DateTime(2012, 1, 1), clr.NullableDateTimeValue, "The NullableDateTimeValue is not correctly filled.");
             Assert.AreEqual("01:02:03", clr.TimeSpanValue, "The TimeSpan is not correctly filled.");
             Assert.AreEqual("01:02:03", clr.NullableTimeSpanValue, "The NullableTimeSpan is not correctly filled.");
-            Assert.AreEqual(Guid.Empty, clr.GuidValue, "The GuidValue is not correctly filled.");
-            Assert.AreEqual(Guid.Empty, clr.NullableGuidValue, "The NullableGuidValue is not correctly filled.");
+            Assert.AreEqual(Guid.Empty.ToString(), clr.GuidValue, "The GuidValue is not correctly filled.");
+            Assert.AreEqual(Guid.Empty.ToString(), clr.NullableGuidValue, "The NullableGuidValue is not correctly filled.");
             Assert.AreEqual(1, clr.ByteValue, "The ByteValue is not correctly filled.");
             Assert.AreEqual(1, clr.NullableByteValue, "The NullableByteValue is not correctly filled.");
             Assert.AreEqual(2, clr.SByteValue, "The SByteValue is not correctly filled.");
@@ -80,8 +81,8 @@ namespace DocumentDB.Context.Tests
             Assert.AreEqual(9, clr.NullableSingleValue, "The NullableSingleValue is not correctly filled.");
             Assert.AreEqual(10, clr.DoubleValue, "The DoubleValue is not correctly filled.");
             Assert.AreEqual(10, clr.NullableDoubleValue, "The NullableDoubleValue is not correctly filled.");
-            Assert.AreEqual("11", clr.DecimalValue, "The DecimalValue is not correctly filled.");
-            Assert.AreEqual("11", clr.NullableDecimalValue, "The NullableDecimalValue is not correctly filled.");
+            Assert.AreEqual(11d, clr.DecimalValue, "The DecimalValue is not correctly filled.");
+            Assert.AreEqual(11d, clr.NullableDecimalValue, "The NullableDecimalValue is not correctly filled.");
             Assert.AreEqual("abc", clr.StringValue, "The StringValue is not correctly filled.");
         }
 
@@ -136,17 +137,17 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void QueryClrGuidValue()
         {
-            var clr = ctx.ClrTypes.Find(ctx.ClrTypes.GuidValue == Guid.Empty);
+            var clr = ctx.ClrTypes.Find(ctx.ClrTypes.GuidValue == Guid.Empty.ToString());
             Assert.IsNotNull(clr);
-            Assert.AreEqual(Guid.Empty, clr.GuidValue, "The GuidValueis not correctly filled.");
+            Assert.AreEqual(Guid.Empty.ToString(), clr.GuidValue, "The GuidValueis not correctly filled.");
         }
 
         [Test]
         public void QueryClrNullableGuidValue()
         {
-            var clr = ctx.ClrTypes.Find(ctx.ClrTypes.NullableGuidValue == Guid.Empty);
+            var clr = ctx.ClrTypes.Find(ctx.ClrTypes.NullableGuidValue == Guid.Empty.ToString());
             Assert.IsNotNull(clr);
-            Assert.AreEqual(Guid.Empty, clr.NullableGuidValue, "The NullableGuidValueis not correctly filled.");
+            Assert.AreEqual(Guid.Empty.ToString(), clr.NullableGuidValue, "The NullableGuidValueis not correctly filled.");
         }
 
         [Test]

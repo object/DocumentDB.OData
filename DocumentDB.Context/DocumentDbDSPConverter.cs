@@ -149,8 +149,12 @@ namespace DocumentDB.Context
             }
             else
             {
-                // TODO
-                return element.Value;
+                switch (element.Value.Type)
+                {
+                    case JTokenType.Null:
+                    default:
+                        return null;
+                }
             }
         }
 

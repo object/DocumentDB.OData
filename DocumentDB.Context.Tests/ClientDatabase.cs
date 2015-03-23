@@ -26,12 +26,22 @@ namespace DocumentDB.Context.Tests
 
         public ClientCollection GetCollection(string collectionName)
         {
-            var documentCollection = _documentClient.CreateDocumentCollectionAsync(
-                _database.CollectionsLink,
-                new DocumentCollection
-                {
-                    Id = collectionName
-                }).Result;
+            var documentCollection = _documentClient
+                .CreateDocumentCollectionQuery(_database.SelfLink)
+                .Where(c => c.Id == collectionName)
+                .AsEnumerable()
+                .FirstOrDefault();
+
+            if (documentCollection == null)
+            {
+                documentCollection = _documentClient
+                    .CreateDocumentCollectionAsync(
+                    _database.CollectionsLink,
+                    new DocumentCollection
+                    {
+                        Id = collectionName
+                    }).Result;
+            }
 
             return new ClientCollection(_documentClient, documentCollection);
         }

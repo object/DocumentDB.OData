@@ -17,6 +17,25 @@ namespace DocumentDB.Context.Tests
 {
     public static class TestData
     {
+        public static string[] JsonSamples =
+        {
+            //"Colors", 
+            //"Facebook", 
+            //"Flickr", 
+            //"GoogleMaps", 
+            //"iPhone", 
+            //"Twitter", 
+            //"YouTube", 
+            //"Nested", 
+            //"ArrayOfNested", 
+            //"ArrayInArray", 
+            //"EmptyArray", 
+            "NullArray",
+            //"UnresolvedArray",
+            //"UnresolvedProperty",
+            //"EmptyProperty",
+        };
+
         public static void PopulateWithCategoriesAndProducts(bool clearDatabase = true)
         {
             var database = GetDatabase(clearDatabase);
@@ -194,26 +213,7 @@ namespace DocumentDB.Context.Tests
         {
             var database = GetDatabase(clearDatabase);
 
-            var jsonSamples = new[]
-                {
-                    "Colors", 
-                    "Facebook", 
-                    "Flickr", 
-                    //"GoogleMaps", 
-                    //"iPhone", 
-                    //"Twitter", 
-                    //"YouTube", 
-                    //"Nested", 
-                    //"ArrayOfNested", 
-                    //"ArrayInArray", 
-                    //"EmptyArray", 
-                    //"NullArray",
-                    //"UnresolvedArray",
-                    //"UnresolvedProperty",
-                    //"EmptyProperty",
-                };
-
-            foreach (var collectionName in jsonSamples)
+            foreach (var collectionName in JsonSamples)
             {
                 var jsonCollection = GetResourceAsString(collectionName + ".json").Split(new string[] { "---" }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var json in jsonCollection)
