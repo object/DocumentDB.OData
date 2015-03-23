@@ -249,7 +249,7 @@ namespace DocumentDB.Context.Tests
         public void FilterEqualObjectID()
         {
             var product = ctx.Products.Find(ctx.Products.ID == 1);
-            product = ctx.Products.Find(ctx.Products.db_id == product.db_id);
+            product = ctx.Products.Find(ctx.Products.id == product.id);
             Assert.AreEqual(1, product.ID);
         }
 

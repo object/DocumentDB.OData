@@ -28,7 +28,7 @@ namespace DocumentDB.Context.Tests
         {
             var result = ctx.TypeWithoutExplicitId.All().ToList();
             Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
-            Assert.IsNotNull(result[0].db_id);
+            Assert.IsNotNull(result[0].id);
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace DocumentDB.Context.Tests
         {
             var result = ctx.TypeWithDocumentId.All().ToList();
             Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
-            Assert.IsNotNull(result[0].db_id);
+            Assert.IsNotNull(result[0].id);
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace DocumentDB.Context.Tests
         {
             var result = ctx.TypeWithStringId.All().ToList();
             Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
-            Assert.AreEqual("1", result[0].db_id);
+            Assert.AreEqual("1", result[0].id);
         }
     }
 

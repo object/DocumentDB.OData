@@ -399,7 +399,7 @@ namespace DocumentDB.Context
 
         private static bool IsObjectId(JProperty element)
         {
-            return element.Name == DocumentDbMetadata.ProviderObjectIdName;
+            return string.Compare(element.Name, DocumentDbMetadata.ProviderObjectIdName, StringComparison.InvariantCultureIgnoreCase) == 0;
         }
 
         private static Type GetElementType(JProperty element, bool treatObjectIdAsKey)
