@@ -78,24 +78,24 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void AllEntitiesVerifyID()
+        public void AllEntitiesVerifyProductID()
         {
             var result = ctx.Products.All().ToList();
-            Assert.AreEqual(3, result[2].ID, "The ID is not correctly filled.");
+            Assert.AreEqual(2, result[2].ProductID, "The ID is not correctly filled.");
         }
 
         [Test]
         public void AllEntitiesVerifyProductName()
         {
             var result = ctx.Products.All().ToList();
-            Assert.AreEqual("Milk", result[1].Name, "The Product Name is not correctly filled.");
+            Assert.AreEqual("Wine", result[1].Name, "The Product Name is not correctly filled.");
         }
 
         [Test]
         public void AllEntitiesVerifySupplierName()
         {
             var result = ctx.Products.All().ToList();
-            Assert.AreEqual("Green Farm", result[1].Supplier.Name, "The Supplier Name is not correctly filled.");
+            Assert.AreEqual("City Bakery", result[0].Supplier.Name, "The Supplier Name is not correctly filled.");
         }
 
         [Test]
@@ -110,14 +110,13 @@ namespace DocumentDB.Context.Tests
         {
             var result = ctx.Products.All().ToList();
             Assert.Null(result[0].DiscontinueDate, "The DiscontinueDate must be null.");
-            Assert.Null(result[1].DiscontinueDate, "The DiscontinueDate must be null.");
         }
 
         [Test]
         public void AllEntitiesVerifyNonNullDiscontinueDate()
         {
             var result = ctx.Products.All().ToList();
-            Assert.NotNull(result[2].DiscontinueDate, "The DiscontinueDate must not be null.");
+            Assert.NotNull(result[1].DiscontinueDate, "The DiscontinueDate must not be null.");
         }
 
         [Test]
@@ -155,10 +154,10 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void FilterEqualID()
+        public void FilterEqualProductID()
         {
-            var product = ctx.Products.Find(ctx.Products.ID == 1);
-            Assert.AreEqual(1, product.ID);
+            var product = ctx.Products.Find(ctx.Products.ProductID == 1);
+            Assert.AreEqual(1, product.ProductID);
         }
 
         [Test]
@@ -176,16 +175,16 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void FilterEqualIDAndEqualName()
+        public void FilterEqualProductIDAndEqualName()
         {
-            var result = ctx.Products.FindAll(ctx.Products.ID == 1 && ctx.Products.Name == "Bread").ToList();
+            var result = ctx.Products.FindAll(ctx.Products.ProductID == 1 && ctx.Products.Name == "Bread").ToList();
             Assert.AreEqual(1, result.Count);
         }
 
         [Test]
-        public void FilterGreaterID()
+        public void FilterGreaterProductID()
         {
-            var result = ctx.Products.FindAll(ctx.Products.ID > 0).ToList();
+            var result = ctx.Products.FindAll(ctx.Products.ProductID > 0).ToList();
             Assert.AreEqual(3, result.Count);
         }
 
@@ -218,9 +217,9 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void FilterGreaterIDAndNameLength()
+        public void FilterGreaterProductIDAndNameLength()
         {
-            var result = ctx.Products.FindAll(ctx.Products.ID > 0 && ctx.Products.Name.Length() == 4).ToList();
+            var result = ctx.Products.FindAll(ctx.Products.ProductID > 0 && ctx.Products.Name.Length() == 4).ToList();
             Assert.AreEqual(2, result.Count);
         }
 
@@ -248,16 +247,17 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterEqualObjectID()
         {
-            var product = ctx.Products.Find(ctx.Products.ID == 1);
-            product = ctx.Products.Find(ctx.Products.id == product.id);
-            Assert.AreEqual(1, product.ID);
+            var product = ctx.Products.Find(ctx.Products.id != null);
+            var id = product.id;
+            product = ctx.Products.Find(ctx.Products.id == id);
+            Assert.AreEqual(id, product.id);
         }
 
         [Test]
         public void ProjectionVerifyExcluded()
         {
-            var product = ctx.Products.All().Select(ctx.Products.ID).First();
-            var id = product.ID;
+            var product = ctx.Products.All().Select(ctx.Products.id).First();
+            var id = product.id;
             try
             {
                 var name = product.Name;
@@ -270,10 +270,10 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void ProjectionVerifyID()
         {
-            var products = ctx.Products.FindAll(ctx.Products.ID > 0).Select(ctx.Products.ID).ToList();
+            var products = ctx.Products.FindAll(ctx.Products.id != null).Select(ctx.Products.id).ToList();
             foreach (var product in products)
             {
-                Assert.Greater(product.ID, 0, "The ID is not correctly filled.");
+                Assert.NotNull(product.id, "The ID is not correctly filled.");
             }
         }
 

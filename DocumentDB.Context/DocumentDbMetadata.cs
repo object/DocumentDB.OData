@@ -154,12 +154,7 @@ namespace DocumentDB.Context
         private void PopulateMetadataFromCollection(DocumentDbContext context, string collectionName, ResourceSet resourceSet)
         {
             var collection = context.Database.GetCollection(collectionName);
-            //const string naturalSort = "$natural";
-            //var sortOrder = this.Configuration.FetchPosition == DocumentDbConfiguration.FetchPosition.End
-            //                    ? SortBy.Descending(naturalSort)
-            //                    : SortBy.Ascending(naturalSort);
-            //var documents = collection.FindAll().SetSortOrder(sortOrder);
-
+            // TODO: fetch first or last documents once sort is supported
             var documents = context.Client.CreateDocumentQuery<JObject>(collection.DocumentsLink);
 
             int rowCount = 0;

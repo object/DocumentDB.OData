@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Services.Common;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 
 namespace DocumentDB.Context.Tests
@@ -100,6 +101,7 @@ namespace DocumentDB.Context.Tests
 
     public class TypeWithStringId
     {
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
         public string Name { get; set; }
     }

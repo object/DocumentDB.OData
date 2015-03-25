@@ -38,7 +38,7 @@ namespace DocumentDB.Context.Tests
             base.RequestAndValidateMetadata();
         }
 
-        [Test]
+        [Test, Ignore("Enable when sorting is supported")]
         public void VariableTypesPrefetchOneForwardNoUpdate()
         {
             TestService.Configuration = new DocumentDbConfiguration
@@ -56,7 +56,7 @@ namespace DocumentDB.Context.Tests
             AssertResultHasOneColumn(result);
         }
 
-        [Test]
+        [Test, Ignore("Enable when sorting is supported")]
         public void VariableTypesPrefetchOneBackwardNoUpdate()
         {
             TestService.Configuration = new DocumentDbConfiguration
@@ -74,7 +74,7 @@ namespace DocumentDB.Context.Tests
             AssertResultHasThreeColumns(result);
         }
 
-        [Test]
+        [Test, Ignore("Enable when sorting is supported")]
         public void VariableTypesPrefetchTwoForwardNoUpdate()
         {
             TestService.Configuration = new DocumentDbConfiguration
@@ -92,7 +92,7 @@ namespace DocumentDB.Context.Tests
             AssertResultHasTwoColumns(result);
         }
 
-        [Test]
+        [Test, Ignore("Enable when sorting is supported")]
         public void VariableTypesPrefetchTwoBackwardNoUpdate()
         {
             TestService.Configuration = new DocumentDbConfiguration
@@ -110,7 +110,7 @@ namespace DocumentDB.Context.Tests
             AssertResultHasThreeColumns(result);
         }
 
-        [Test]
+        [Test, Ignore("Enable when sorting is supported")]
         public void VariableTypesPrefetchAll()
         {
             TestService.Configuration = new DocumentDbConfiguration

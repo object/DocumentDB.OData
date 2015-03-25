@@ -32,14 +32,6 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void AllTypesWithDocumentIdVerifyResultCountAndId()
-        {
-            var result = ctx.TypeWithDocumentId.All().ToList();
-            Assert.AreEqual(3, result.Count, "The service returned unexpected number of results.");
-            Assert.IsNotNull(result[0].id);
-        }
-
-        [Test]
         public void AllTypesWithStringIdVerifyResultCountAndId()
         {
             var result = ctx.TypeWithStringId.All().ToList();
