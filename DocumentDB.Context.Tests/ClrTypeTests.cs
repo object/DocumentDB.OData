@@ -342,7 +342,7 @@ namespace DocumentDB.Context.Tests
     {
     }
 
-    [TestFixture, Ignore]
+    [TestFixture]
     public class QueryableServiceClrTypeTests : ClrTypeTests<ProductQueryableService>
     {
     }

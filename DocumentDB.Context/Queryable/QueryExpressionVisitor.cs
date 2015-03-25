@@ -8,6 +8,7 @@ using System.Reflection;
 using DataServiceProvider;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.Linq;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -17,13 +18,15 @@ namespace DocumentDB.Context.Queryable
         private readonly Type collectionType;
         private readonly DocumentDbMetadata dbMetadata;
 
-        public QueryExpressionVisitor(DocumentCollection documentCollection, DocumentDbMetadata dbMetadata, Type queryDocumentType)
+        public QueryExpressionVisitor(DocumentClient documentClient, DocumentCollection documentCollection, DocumentDbMetadata dbMetadata, Type queryDocumentType)
         {
-            var genericMethod = typeof(DocumentClient).GetMethods()
-                .Where(x => x.Name == "CreateDocumentQuery" && x.GetParameters().Single().ParameterType.IsGenericType)
+            var genericMethod = typeof (DocumentQueryable).GetMethods()
+                .Where(x => x.Name == "CreateDocumentQuery" && 
+                    x.GetParameters().Length == 3 && 
+                    x.ReturnType.GenericTypeArguments.First().IsGenericParameter)
                 .Single();
             var method = genericMethod.MakeGenericMethod(queryDocumentType);
-            this.queryableCollection = method.Invoke(null, new object[] { documentCollection }) as IQueryable;
+            this.queryableCollection = method.Invoke(null, new object[] { documentClient, documentCollection.DocumentsLink, null}) as IQueryable;
             this.collectionType = queryDocumentType;
             this.dbMetadata = dbMetadata;
         }

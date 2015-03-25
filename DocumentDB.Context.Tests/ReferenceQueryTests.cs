@@ -50,7 +50,7 @@ namespace DocumentDB.Context.Tests
     {
     }
 
-    [TestFixture, Ignore]
+    [TestFixture]
     public class QueryableServiceReferenceQueryTests : ReferenceQueryTests<ProductQueryableService>
     {
     }

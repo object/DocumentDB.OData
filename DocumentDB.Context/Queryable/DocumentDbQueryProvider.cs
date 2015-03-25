@@ -68,30 +68,30 @@ namespace DocumentDB.Context.Queryable
         public IEnumerator<TElement> ExecuteQuery<TElement>(Expression expression)
         {
             DocumentCollection documentCollection;
-            Expression mongoExpression;
+            Expression documentExpression;
             MethodInfo method;
 
-            PrepareExecution(expression, "GetEnumerableCollection", out documentCollection, out mongoExpression, out method);
+            PrepareExecution(expression, "GetEnumerableCollection", out documentCollection, out documentExpression, out method);
 
-            var resourceEnumerable = method.Invoke(this, new object[] { documentCollection, mongoExpression }) as IEnumerable<DSPResource>;
+            var resourceEnumerable = method.Invoke(this, new object[] { documentCollection, documentExpression }) as IEnumerable<DSPResource>;
             return resourceEnumerable.GetEnumerator() as IEnumerator<TElement>;
         }
 
         public object ExecuteNonQuery(Expression expression)
         {
             DocumentCollection documentCollection;
-            Expression mongoExpression;
+            Expression documentExpression;
             MethodInfo method;
 
-            PrepareExecution(expression, "GetExecutionResult", out documentCollection, out mongoExpression, out method);
+            PrepareExecution(expression, "GetExecutionResult", out documentCollection, out documentExpression, out method);
 
-            return method.Invoke(this, new object[] { documentCollection, mongoExpression });
+            return method.Invoke(this, new object[] { documentCollection, documentExpression });
         }
 
-        private void PrepareExecution(Expression expression, string methodName, out DocumentCollection documentCollection, out Expression mongoExpression, out MethodInfo method)
+        private void PrepareExecution(Expression expression, string methodName, out DocumentCollection documentCollection, out Expression documentExpression, out MethodInfo method)
         {
             documentCollection = this.dbContext.Database.GetCollection(collectionName);
-            mongoExpression = new QueryExpressionVisitor(documentCollection, this.dbMetadata, collectionType).Visit(expression);
+            documentExpression = new QueryExpressionVisitor(this.dbContext.Client, documentCollection, this.dbMetadata, collectionType).Visit(expression);
 
             var genericMethod = this.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
             method = genericMethod.MakeGenericMethod(collectionType);
@@ -99,15 +99,21 @@ namespace DocumentDB.Context.Queryable
 
         private IEnumerable<DSPResource> GetEnumerableCollection<TSource>(DocumentCollection documentCollection, Expression expression)
         {
-            var enumerator = dbContext.Client.CreateDocumentQuery<TSource>(documentCollection.DocumentsLink)
-                .Provider.CreateQuery<TSource>(expression).GetEnumerator();
+            var provider = GetQueryProvider<TSource>(documentCollection, expression);
+            var enumerator = provider.CreateQuery<TSource>(expression).GetEnumerator();
             return GetEnumerable(enumerator);
         }
 
         private object GetExecutionResult<TSource>(DocumentCollection documentCollection, Expression expression)
         {
-            return dbContext.Client.CreateDocumentQuery<TSource>(documentCollection.DocumentsLink)
-                .Provider.Execute(expression);
+            var provider = GetQueryProvider<TSource>(documentCollection, expression);
+            return provider.Execute(expression);
+        }
+
+        private IQueryProvider GetQueryProvider<TSource>(DocumentCollection documentCollection, Expression expression)
+        {
+            var documentQuery = dbContext.Client.CreateDocumentQuery<TSource>(documentCollection.DocumentsLink);
+            return documentQuery.Provider;
         }
 
         private IEnumerable<DSPResource> GetEnumerable<TSource>(IEnumerator<TSource> enumerator)

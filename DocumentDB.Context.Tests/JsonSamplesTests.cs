@@ -319,7 +319,7 @@ namespace DocumentDB.Context.Tests
     {
     }
 
-    [TestFixture, Ignore]
+    [TestFixture]
     public class QueryableServiceJsonSamplesTests : JsonSamplesTests<ProductQueryableService>
     {
     }

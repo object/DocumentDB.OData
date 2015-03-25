@@ -45,7 +45,7 @@ namespace DocumentDB.Context.Tests
     {
     }
 
-    [TestFixture, Ignore]
+    [TestFixture]
     public class QueryableServiceDocumentIdTests : DocumentIdTests<ProductQueryableService>
     {
     }
