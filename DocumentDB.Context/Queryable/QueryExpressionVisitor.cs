@@ -17,6 +17,7 @@ namespace DocumentDB.Context.Queryable
         private readonly IQueryable queryableCollection;
         private readonly Type collectionType;
         private readonly DocumentDbMetadata dbMetadata;
+        private const string DSPResourceParameterName = "it";
 
         public QueryExpressionVisitor(DocumentClient documentClient, DocumentCollection documentCollection, DocumentDbMetadata dbMetadata, Type queryDocumentType)
         {
@@ -33,6 +34,12 @@ namespace DocumentDB.Context.Queryable
 
         public override Expression VisitMethodCall(MethodCallExpression m)
         {
+            if (m.Object != null && m.Object.Type == typeof (DSPResource) &&
+                m.Object.NodeType == ExpressionType.Parameter && (m.Object as ParameterExpression).Name == DSPResourceParameterName)
+            {
+                return Visit(ReplaceDSPResourceParameter(m));
+            }
+
             if (m.Method.Name == "GetValue" && m.Arguments[0].NodeType == ExpressionType.MemberAccess &&
                 (m.Arguments[0] as MemberExpression).Expression.Type == typeof(ResourceProperty))
             {
@@ -113,7 +120,7 @@ namespace DocumentDB.Context.Queryable
             {
                 return Visit(Expression.Lambda(
                     Visit(lambda.Body),
-                    ReplaceLambdaParameterType(lambda)));
+                    ReplaceLambdaParameterNameAndType(lambda)));
             }
 
             return base.VisitLambda(lambda);
@@ -193,10 +200,12 @@ namespace DocumentDB.Context.Queryable
                 .MakeGenericMethod(genericArguments.ToArray());
         }
 
-        private IEnumerable<ParameterExpression> ReplaceLambdaParameterType(LambdaExpression lambda)
+        private IEnumerable<ParameterExpression> ReplaceLambdaParameterNameAndType(LambdaExpression lambda)
         {
             var parameterExpressions = new List<ParameterExpression>();
-            parameterExpressions.Add(Expression.Parameter(this.collectionType, lambda.Parameters[0].Name));
+            var resourceParameterName = lambda.Parameters[0].Name;
+            parameterExpressions.Add(Expression.Parameter(this.collectionType, 
+                resourceParameterName == DSPResourceParameterName ? "root" : resourceParameterName));
             parameterExpressions.AddRange(lambda.Parameters.Skip(1));
 
             return parameterExpressions;
@@ -286,6 +295,14 @@ namespace DocumentDB.Context.Queryable
         {
             var op = ExpressionUtils.VisualBasicComparisonOperators[m.Method.Name];
             return Expression.MakeBinary(op, m.Arguments[0], m.Arguments[1]);
+        }
+
+        private Expression ReplaceDSPResourceParameter(MethodCallExpression m)
+        {
+            return Expression.Call(
+                Expression.Parameter(typeof (DSPResource), "root"),
+                m.Method,
+                m.Arguments);
         }
     }
 }
