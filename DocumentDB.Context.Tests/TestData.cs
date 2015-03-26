@@ -74,7 +74,7 @@ namespace DocumentDB.Context.Tests
                         Rating = 4,
                         Quantity = new Quantity
                             {
-                                Value = (double)12, 
+                                Amount = (double)12, 
                                 Units = "pieces",
                             },
                         Supplier = new Supplier
@@ -99,7 +99,7 @@ namespace DocumentDB.Context.Tests
                         Rating = 3,
                         Quantity = new Quantity
                             {
-                                Value = (double)4,
+                                Amount = (double)4,
                                 Units = "liters",
                             },
                         Supplier = new Supplier
@@ -123,7 +123,7 @@ namespace DocumentDB.Context.Tests
                         Rating = 5,
                         Quantity = new Quantity
                             {
-                                Value = (double)7,
+                                Amount = (double)7,
                                 Units = "bottles",
                             },
                         Category = categoryBeverages,

@@ -73,7 +73,7 @@ namespace DocumentDB.Context.Tests
         public void FilterEqualQuantityValue()
         {
             var collection = _database.GetCollection("Products");
-            var result = collection.AsQueryable<ClientProduct>().Where(x => x.Quantity.Value == 7).Single();
+            var result = collection.AsQueryable<ClientProduct>().Where(x => x.Quantity.Amount == 7).Single();
             Assert.AreEqual("Wine", result.Name);
         }
 

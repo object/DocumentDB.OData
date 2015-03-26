@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using DataServiceProvider;
 using Microsoft.Azure.Documents;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -27,11 +28,6 @@ namespace DocumentDB.Context.Queryable
             Dictionary<string, Type> providerTypes, Dictionary<string, Type> generatedTypes)
         {
             var collectionType = CreateDynamicTypeForCollection(collectionName, providerTypes, generatedTypes);
-
-            //var conventionPack = new ConventionPack();
-            //conventionPack.Add(new NamedIdMemberConvention(DocumentDbMetadata.MappedObjectIdName));
-            //conventionPack.Add(new IgnoreExtraElementsConvention(true));
-            //ConventionRegistry.Register(collectionName, conventionPack, t => t == collectionType);
 
             return InterceptingProvider.Intercept(
                 new DocumentDbQueryableResource(this.dbMetadata, connectionString, collectionName, collectionType),
@@ -62,7 +58,7 @@ namespace DocumentDB.Context.Queryable
         private Type GetDynamicTypeForProviderType(string typeName, Type providerType,
             Dictionary<string, Type> providerTypes, Dictionary<string, Type> generatedTypes)
         {
-            if (DocumentDbMetadata.CreateDynamicTypesForComplexTypes && providerType == typeof(Document))
+            if (DocumentDbMetadata.CreateDynamicTypesForComplexTypes && providerType == typeof(JObject))
             {
                 Type dynamicType;
                 if (generatedTypes.ContainsKey(typeName))

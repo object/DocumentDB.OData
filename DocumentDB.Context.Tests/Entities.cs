@@ -10,7 +10,7 @@ namespace DocumentDB.Context.Tests
 {
     public class Quantity
     {
-        public double Value { get; set; }
+        public double Amount { get; set; }
         public string Units { get; set; }
     }
 

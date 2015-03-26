@@ -168,7 +168,7 @@ namespace DocumentDB.Context.Tests
         public void AllEntitiesVerifyQuantityValue()
         {
             var result = ctx.Products.All().ToList();
-            Assert.AreEqual(12, result[0].Quantity.Value, "Unexpected quantity value.");
+            Assert.AreEqual(12, result[0].Quantity.Amount, "Unexpected quantity amount.");
         }
 
         [Test]
@@ -267,9 +267,9 @@ namespace DocumentDB.Context.Tests
         }
 
         [Test]
-        public void FilterEqualQuantityValue()
+        public void FilterEqualQuantityAmount()
         {
-            var result = ctx.Products.Find(ctx.Products.Quantity.Value == 7);
+            var result = ctx.Products.Find(ctx.Products.Quantity.Amount == 7);
             Assert.AreEqual("Wine", result.Name);
         }
 
@@ -329,7 +329,7 @@ namespace DocumentDB.Context.Tests
             var products = ctx.Products.All().Select(ctx.Products.Quantity).ToList();
             foreach (var product in products)
             {
-                Assert.Greater(product.Quantity.Value, 0, "The Quantity is not correctly filled.");
+                Assert.Greater(product.Quantity.Amount, 0, "The Quantity is not correctly filled.");
             }
         }
 
@@ -360,7 +360,7 @@ namespace DocumentDB.Context.Tests
             try
             {
                 DocumentDbMetadata.CreateDynamicTypesForComplexTypes = false;
-                Assert.Throws<WebRequestException>(() => { var x = ctx.Products.Find(ctx.Products.Quantity.Value == 7); });
+                Assert.Throws<WebRequestException>(() => { var x = ctx.Products.Find(ctx.Products.Quantity.Amount == 7); });
             }
             finally 
             {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using DataServiceProvider;
 using Microsoft.Azure.Documents;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentDB.Context.Queryable
 {
@@ -13,7 +14,7 @@ namespace DocumentDB.Context.Queryable
         {
             if (m.Method == GetValueMethodInfo)
             {
-                if (m.Arguments[0].Type == typeof(Document)) // JObject?
+                if (m.Arguments[0].Type == typeof(JObject))
                 {
                     return Expression.Call(
                         m.Method,
