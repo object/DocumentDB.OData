@@ -34,13 +34,28 @@ namespace DocumentDB.Context.Tests
 
             if (documentCollection == null)
             {
-                documentCollection = _documentClient
-                    .CreateDocumentCollectionAsync(
-                    _database.CollectionsLink,
-                    new DocumentCollection
+                documentCollection = new DocumentCollection {Id = collectionName};
+                documentCollection.IndexingPolicy.IncludedPaths.Add(new IndexingPath
+                {
+                    IndexType = IndexType.Hash,
+                    Path = "/",
+                });
+                if (collectionName == "Products")
+                {
+                    documentCollection.IndexingPolicy.IncludedPaths.Add(new IndexingPath
                     {
-                        Id = collectionName
-                    }).Result;
+                        IndexType = IndexType.Range,
+                        Path = @"/""ProductID""/?",
+                    });
+                    documentCollection.IndexingPolicy.IncludedPaths.Add(new IndexingPath
+                    {
+                        IndexType = IndexType.Range,
+                        Path = @"/""Rating""/?",
+                    });
+                }
+                
+                documentCollection = _documentClient.CreateDocumentCollectionAsync(
+                    _database.CollectionsLink, documentCollection).Result;
             }
 
             return new ClientCollection(_documentClient, documentCollection);

@@ -212,6 +212,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterNameContainsEqualsTrue()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("String.Contains is not supported");
+
             var result = ctx.Products.FindAll(ctx.Products.Name.Contains("i") == true).ToList();
             Assert.AreEqual(2, result.Count);
         }
@@ -219,6 +222,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterNameContainsEqualsFalse()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("String.Contains is not supported");
+
             var result = ctx.Products.FindAll(ctx.Products.Name.Contains("i") == false).ToList();
             Assert.AreEqual(1, result.Count);
         }
@@ -233,6 +239,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterNameLength()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("String.Length is not supported");
+
             var result = ctx.Products.FindAll(ctx.Products.Name.Length() == 4).ToList();
             Assert.AreEqual(2, result.Count);
         }
@@ -240,6 +249,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterGreaterProductIDAndNameLength()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("String.Length is not supported");
+
             var result = ctx.Products.FindAll(ctx.Products.ProductID > 0 && ctx.Products.Name.Length() == 4).ToList();
             Assert.AreEqual(2, result.Count);
         }
