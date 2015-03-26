@@ -59,6 +59,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void AllEntitiesTakeOneVerifyResultCount()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("Take is not supported");
+
             var result = ctx.Products.All().Take(1).ToList();
             Assert.AreEqual(1, result.Count, "The service returned unexpected number of results.");
         }
@@ -66,6 +69,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void AllEntitiesSkipOneVerifyResultCount()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("Skip is not supported");
+
             var result = ctx.Products.All().Skip(1).ToList();
             Assert.AreEqual(2, result.Count, "The service returned unexpected number of results.");
         }
@@ -73,6 +79,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void AllEntitiesCountVerifyResult()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("Count is not supported");
+
             var result = ctx.Products.All().Count();
             Assert.AreEqual(3, result, "The count is not correctly computed.");
         }
@@ -122,6 +131,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void AllEntitiesOrderby()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("OrderBy is not supported");
+
             var result = ctx.Products.All().OrderBy(ctx.Products.Name).ToList();
             for (int i = 0; i < 2; i++)
             {
@@ -132,6 +144,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void AllEntitiesOrderbyDescending()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("OrderBy is not supported");
+
             var result = ctx.Products.All().OrderByDescending(ctx.Products.Name).ToList();
             for (int i = 0; i < 2; i++)
             {
@@ -142,6 +157,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void AllEntitiesOrderbyTakeOneVerifyResultCount()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("OrderBy and Take are not supported");
+
             var result = ctx.Products.All().OrderBy(ctx.Products.Name).Take(1).ToList();
             Assert.AreEqual(1, result.Count, "The service returned unexpected number of results.");
         }
@@ -170,6 +188,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterEqualNameCountVerifyResult()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("Count is not supported");
+
             var result = ctx.Products.FindAll(ctx.Products.Name == "Bread").Count();
             Assert.AreEqual(1, result, "The count is not correctly computed.");
         }
@@ -226,6 +247,9 @@ namespace DocumentDB.Context.Tests
         [Test]
         public void FilterNameLengthOrderByCountVerifyResult()
         {
+            if (this.GetType() == typeof(QueryableServiceQueryTests))
+                Assert.Ignore("OrderBy is not supported");
+
             var result = ctx.Products.FindAll(ctx.Products.Name.Length() == 4).OrderBy(ctx.Products.Rating).Count();
             Assert.AreEqual(2, result, "The count is not correctly computed.");
         }
