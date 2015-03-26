@@ -57,7 +57,7 @@ namespace DocumentDB.Context.Queryable
 
         private static TypeBuilder GetTypeBuilder(Type baseType)
         {
-            var typeSignature = "DynamicType" + Guid.NewGuid().ToString();
+            var typeSignature = "Dynamic_" + Guid.NewGuid().ToString("N");
             var an = new AssemblyName(typeSignature);
             AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
             ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("DocumentDB.Context.DynamicModule");

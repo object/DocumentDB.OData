@@ -14,10 +14,10 @@ namespace DocumentDB.Context.Queryable
 {
     public class QueryExpressionVisitor : DSPMethodTranslatingVisitor
     {
-        private readonly IQueryable queryableCollection;
-        private readonly Type collectionType;
-        private readonly DocumentDbMetadata dbMetadata;
-        private const string DSPResourceParameterName = "it";
+        private readonly IQueryable _queryableCollection;
+        private readonly Type _collectionType;
+        private readonly DocumentDbMetadata _dbMetadata;
+        private readonly Dictionary<string, ParameterExpression> _parameterSubstitutions = new Dictionary<string, ParameterExpression>(); 
 
         public QueryExpressionVisitor(DocumentClient documentClient, DocumentCollection documentCollection, DocumentDbMetadata dbMetadata, Type queryDocumentType)
         {
@@ -27,19 +27,13 @@ namespace DocumentDB.Context.Queryable
                     x.ReturnType.GenericTypeArguments.First().IsGenericParameter)
                 .Single();
             var method = genericMethod.MakeGenericMethod(queryDocumentType);
-            this.queryableCollection = method.Invoke(null, new object[] { documentClient, documentCollection.DocumentsLink, null}) as IQueryable;
-            this.collectionType = queryDocumentType;
-            this.dbMetadata = dbMetadata;
+            _queryableCollection = method.Invoke(null, new object[] { documentClient, documentCollection.DocumentsLink, null}) as IQueryable;
+            _collectionType = queryDocumentType;
+            _dbMetadata = dbMetadata;
         }
 
         public override Expression VisitMethodCall(MethodCallExpression m)
         {
-            if (m.Object != null && m.Object.Type == typeof (DSPResource) &&
-                m.Object.NodeType == ExpressionType.Parameter && (m.Object as ParameterExpression).Name == DSPResourceParameterName)
-            {
-                return Visit(ReplaceDSPResourceParameter(m));
-            }
-
             if (m.Method.Name == "GetValue" && m.Arguments[0].NodeType == ExpressionType.MemberAccess &&
                 (m.Arguments[0] as MemberExpression).Expression.Type == typeof(ResourceProperty))
             {
@@ -104,7 +98,7 @@ namespace DocumentDB.Context.Queryable
         {
             if (c.Value != null && c.Value.GetType() == typeof(EnumerableQuery<DSPResource>))
             {
-                return Expression.Constant(this.queryableCollection);
+                return Expression.Constant(_queryableCollection);
             }
             else if (c.Type.IsGenericType && c.Type.BaseType == typeof(ValueType) && c.Type.UnderlyingSystemType.Name == "Nullable`1")
             {
@@ -118,9 +112,9 @@ namespace DocumentDB.Context.Queryable
         {
             if (lambda.Parameters.Count > 0 && lambda.Parameters[0].Type == typeof(DSPResource))
             {
-                return Visit(Expression.Lambda(
-                    Visit(lambda.Body),
-                    ReplaceLambdaParameterNameAndType(lambda)));
+                var parameters = ReplaceLambdaParameterType(lambda);
+                var body = Visit(lambda.Body);
+                return Visit(Expression.Lambda(body, parameters));
             }
 
             return base.VisitLambda(lambda);
@@ -192,7 +186,7 @@ namespace DocumentDB.Context.Queryable
         private MethodInfo ReplaceGenericMethodType(MethodInfo method, params Type[] genericTypes)
         {
             var genericArguments = new List<Type>();
-            genericArguments.Add(this.collectionType);
+            genericArguments.Add(_collectionType);
             genericArguments.AddRange(genericTypes);
             genericArguments.AddRange(method.GetGenericArguments().Skip(1 + genericTypes.Count()));
 
@@ -200,12 +194,11 @@ namespace DocumentDB.Context.Queryable
                 .MakeGenericMethod(genericArguments.ToArray());
         }
 
-        private IEnumerable<ParameterExpression> ReplaceLambdaParameterNameAndType(LambdaExpression lambda)
+        private IEnumerable<ParameterExpression> ReplaceLambdaParameterType(LambdaExpression lambda)
         {
             var parameterExpressions = new List<ParameterExpression>();
-            var resourceParameterName = lambda.Parameters[0].Name;
-            parameterExpressions.Add(Expression.Parameter(this.collectionType, 
-                resourceParameterName == DSPResourceParameterName ? "root" : resourceParameterName));
+            var parameterExpression = GetOrCreateCollectionParameterExpression(lambda.Parameters[0].Name);
+            parameterExpressions.Add(parameterExpression);
             parameterExpressions.AddRange(lambda.Parameters.Skip(1));
 
             return parameterExpressions;
@@ -256,8 +249,8 @@ namespace DocumentDB.Context.Queryable
 
             if (m.Object.NodeType == ExpressionType.Parameter)
             {
-                var parameterExpression = Expression.Parameter(this.collectionType, (m.Object as ParameterExpression).Name);
-                var member = this.collectionType.GetMember(fieldName).Single();
+                var parameterExpression = GetOrCreateCollectionParameterExpression((m.Object as ParameterExpression).Name);
+                var member = _collectionType.GetMember(fieldName).Single();
                 return Expression.MakeMemberAccess(parameterExpression, member);
             }
             else if (m.Object.NodeType == ExpressionType.Convert && (m.Object as UnaryExpression).Operand.NodeType == ExpressionType.Call)
@@ -269,7 +262,7 @@ namespace DocumentDB.Context.Queryable
                 {
                     typeName = typeName.Replace(DocumentDbMetadata.WordSeparator, ".");
                 }
-                var propertyType = this.dbMetadata.GeneratedTypes.Single(x => x.Key == typeName).Value;
+                var propertyType = _dbMetadata.GeneratedTypes.Single(x => x.Key == typeName).Value;
                 var member = propertyType.GetMember(fieldName).Single();
                 var expression = ReplaceMemberAccess(methodCallExpression);
                 return Expression.MakeMemberAccess(expression, member);
@@ -286,8 +279,8 @@ namespace DocumentDB.Context.Queryable
             if (fieldName == DocumentDbMetadata.MappedObjectIdName)
                 fieldName = DocumentDbMetadata.ProviderObjectIdName;
 
-            var parameterExpression = Expression.Parameter(this.collectionType, (m.Object as ParameterExpression).Name);
-            var member = this.collectionType.GetMember(fieldName).Single();
+            var parameterExpression = GetOrCreateCollectionParameterExpression((m.Object as ParameterExpression).Name);
+            var member = _collectionType.GetMember(fieldName).Single();
             return Expression.MakeMemberAccess(parameterExpression, member);
         }
 
@@ -297,12 +290,18 @@ namespace DocumentDB.Context.Queryable
             return Expression.MakeBinary(op, m.Arguments[0], m.Arguments[1]);
         }
 
-        private Expression ReplaceDSPResourceParameter(MethodCallExpression m)
+        private ParameterExpression GetOrCreateCollectionParameterExpression(string parameterName)
         {
-            return Expression.Call(
-                Expression.Parameter(typeof (DSPResource), "root"),
-                m.Method,
-                m.Arguments);
+            if (!_parameterSubstitutions.ContainsKey(parameterName))
+            {
+                var parameterExpression = Expression.Parameter(_collectionType, parameterName);
+                _parameterSubstitutions.Add(parameterName, parameterExpression);
+                return parameterExpression;
+            }
+            else
+            {
+                return _parameterSubstitutions[parameterName];
+            }
         }
     }
 }

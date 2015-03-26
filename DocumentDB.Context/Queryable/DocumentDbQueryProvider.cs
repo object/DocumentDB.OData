@@ -99,18 +99,18 @@ namespace DocumentDB.Context.Queryable
 
         private IEnumerable<DSPResource> GetEnumerableCollection<TSource>(DocumentCollection documentCollection, Expression expression)
         {
-            var provider = GetQueryProvider<TSource>(documentCollection, expression);
+            var provider = GetQueryProvider<TSource>(documentCollection);
             var enumerator = provider.CreateQuery<TSource>(expression).GetEnumerator();
             return GetEnumerable(enumerator);
         }
 
         private object GetExecutionResult<TSource>(DocumentCollection documentCollection, Expression expression)
         {
-            var provider = GetQueryProvider<TSource>(documentCollection, expression);
+            var provider = GetQueryProvider<TSource>(documentCollection);
             return provider.Execute(expression);
         }
 
-        private IQueryProvider GetQueryProvider<TSource>(DocumentCollection documentCollection, Expression expression)
+        private IQueryProvider GetQueryProvider<TSource>(DocumentCollection documentCollection)
         {
             var documentQuery = dbContext.Client.CreateDocumentQuery<TSource>(documentCollection.DocumentsLink);
             return documentQuery.Provider;
